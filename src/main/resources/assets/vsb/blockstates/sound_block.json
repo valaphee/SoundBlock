@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "normal": {
+      "model": "vsb:sound_block"
+    }
+  }
+}
