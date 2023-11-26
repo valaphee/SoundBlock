@@ -1,0 +1,16 @@
+[
+{
+  "modid": "valapheesoundblock",
+  "name": "Valaphee's Sound Block",
+  "description": "",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["Valaphee"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
