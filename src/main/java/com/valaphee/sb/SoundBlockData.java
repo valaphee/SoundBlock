@@ -18,6 +18,8 @@ public class SoundBlockData extends TileEntity {
     private double offsetY = 0.0;
     @Setter
     private double offsetZ = 0.0;
+    @Setter
+    private int loopDelay = 0;
     private final List<Sound> intro = new ArrayList<>();
     private final List<Sound> loop = new ArrayList<>();
     private final List<Sound> outro = new ArrayList<>();
@@ -28,9 +30,10 @@ public class SoundBlockData extends TileEntity {
         offsetX = compound.getDouble("ofx");
         offsetY = compound.getDouble("ofy");
         offsetZ = compound.getDouble("ofz");
+        loopDelay = compound.getInteger("lopDelay");
 
         intro.clear();
-        NBTTagList introListTag = compound.getTagList("iro", 10);
+        NBTTagList introListTag = compound.getTagList("itr", 10);
         for (NBTBase introTag : introListTag) {
             NBTTagCompound introCompoundTag = (NBTTagCompound) introTag;
             Sound sound = new Sound();
@@ -48,15 +51,16 @@ public class SoundBlockData extends TileEntity {
             loop.add(sound);
         }
 
-
         outro.clear();
-        NBTTagList outroListTag = compound.getTagList("oro", 10);
+        NBTTagList outroListTag = compound.getTagList("otr", 10);
         for (NBTBase outroTag : outroListTag) {
             NBTTagCompound outroCompoundTag = (NBTTagCompound) outroTag;
             Sound sound = new Sound();
             sound.readFromNbt(outroCompoundTag);
             outro.add(sound);
         }
+
+        Main.logger.info(this);
     }
 
     @Override
@@ -65,6 +69,7 @@ public class SoundBlockData extends TileEntity {
         compound.setDouble("ofx", offsetX);
         compound.setDouble("ofy", offsetY);
         compound.setDouble("ofz", offsetZ);
+        compound.setInteger("lopDelay", loopDelay);
 
         NBTTagList introListTag = new NBTTagList();
         for (Sound sound : intro) {
@@ -72,7 +77,7 @@ public class SoundBlockData extends TileEntity {
             sound.writeToNbt(introCompoundTag);
             introListTag.appendTag(introCompoundTag);
         }
-        compound.setTag("iro", introListTag);
+        compound.setTag("itr", introListTag);
 
 
         NBTTagList loopListTag = new NBTTagList();
@@ -90,9 +95,22 @@ public class SoundBlockData extends TileEntity {
             sound.writeToNbt(outroCompoundTag);
             outroListTag.appendTag(outroCompoundTag);
         }
-        compound.setTag("oro", outroListTag);
+        compound.setTag("otr", outroListTag);
 
         return compound;
+    }
+
+    @Override
+    public String toString() {
+        return "SoundBlockData{" +
+                "offsetX=" + offsetX +
+                ", offsetY=" + offsetY +
+                ", offsetZ=" + offsetZ +
+                ", loopDelay=" + loopDelay +
+                ", intro=" + intro +
+                ", loop=" + loop +
+                ", outro=" + outro +
+                '}';
     }
 
     @Getter
@@ -120,6 +138,18 @@ public class SoundBlockData extends TileEntity {
             compound.setDouble("ofx", offsetX);
             compound.setFloat("vol", volume);
             compound.setFloat("pit", pitch);
+        }
+
+        @Override
+        public String toString() {
+            return "Sound{" +
+                    "id='" + id + '\'' +
+                    ", offsetX=" + offsetX +
+                    ", offsetY=" + offsetY +
+                    ", offsetZ=" + offsetZ +
+                    ", volume=" + volume +
+                    ", pitch=" + pitch +
+                    '}';
         }
     }
 }
