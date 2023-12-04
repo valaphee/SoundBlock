@@ -13,6 +13,8 @@ import java.util.List;
 @Getter
 public class SoundBlockData extends TileEntity {
     @Setter
+    private boolean powered = false;
+    @Setter
     private double offsetX = 0.0;
     @Setter
     private double offsetY = 0.0;
@@ -23,10 +25,13 @@ public class SoundBlockData extends TileEntity {
     private final List<Sound> intro = new ArrayList<>();
     private final List<Sound> loop = new ArrayList<>();
     private final List<Sound> outro = new ArrayList<>();
+    private boolean unloaded = false;
 
     @Override
     public void readFromNBT(NBTTagCompound compound) {
         super.readFromNBT(compound);
+
+        powered = compound.getBoolean("powered");
         offsetX = compound.getDouble("ofx");
         offsetY = compound.getDouble("ofy");
         offsetZ = compound.getDouble("ofz");
@@ -40,7 +45,6 @@ public class SoundBlockData extends TileEntity {
             sound.readFromNbt(introCompoundTag);
             intro.add(sound);
         }
-
 
         loop.clear();
         NBTTagList loopListTag = compound.getTagList("lop", 10);
@@ -59,13 +63,13 @@ public class SoundBlockData extends TileEntity {
             sound.readFromNbt(outroCompoundTag);
             outro.add(sound);
         }
-
-        Main.logger.info(this);
     }
 
     @Override
     public NBTTagCompound writeToNBT(NBTTagCompound compound) {
         super.writeToNBT(compound);
+
+        compound.setBoolean("powered", powered);
         compound.setDouble("ofx", offsetX);
         compound.setDouble("ofy", offsetY);
         compound.setDouble("ofz", offsetZ);
@@ -86,11 +90,10 @@ public class SoundBlockData extends TileEntity {
             sound.writeToNbt(loopCompoundTag);
             loopListTag.appendTag(loopCompoundTag);
         }
-        compound.setTag("lop", introListTag);
-
+        compound.setTag("lop", loopListTag);
 
         NBTTagList outroListTag = new NBTTagList();
-        for (Sound sound : intro) {
+        for (Sound sound : outro) {
             NBTTagCompound outroCompoundTag = new NBTTagCompound();
             sound.writeToNbt(outroCompoundTag);
             outroListTag.appendTag(outroCompoundTag);
@@ -101,16 +104,13 @@ public class SoundBlockData extends TileEntity {
     }
 
     @Override
-    public String toString() {
-        return "SoundBlockData{" +
-                "offsetX=" + offsetX +
-                ", offsetY=" + offsetY +
-                ", offsetZ=" + offsetZ +
-                ", loopDelay=" + loopDelay +
-                ", intro=" + intro +
-                ", loop=" + loop +
-                ", outro=" + outro +
-                '}';
+    public void onLoad() {
+        Main.instance.continueLoop(this);
+    }
+
+    @Override
+    public void onChunkUnload() {
+        unloaded = true;
     }
 
     @Getter
@@ -133,23 +133,12 @@ public class SoundBlockData extends TileEntity {
         }
 
         public void writeToNbt(NBTTagCompound compound) {
+            compound.setString("id", id);
             compound.setDouble("ofx", offsetX);
             compound.setDouble("ofx", offsetX);
             compound.setDouble("ofx", offsetX);
             compound.setFloat("vol", volume);
             compound.setFloat("pit", pitch);
-        }
-
-        @Override
-        public String toString() {
-            return "Sound{" +
-                    "id='" + id + '\'' +
-                    ", offsetX=" + offsetX +
-                    ", offsetY=" + offsetY +
-                    ", offsetZ=" + offsetZ +
-                    ", volume=" + volume +
-                    ", pitch=" + pitch +
-                    '}';
         }
     }
 }

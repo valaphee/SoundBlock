@@ -3,14 +3,14 @@ package com.valaphee.sb;
 import com.google.common.collect.Lists;
 import lombok.AllArgsConstructor;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.*;
+import net.minecraft.client.gui.GuiListExtended;
+import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import org.lwjgl.input.Keyboard;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 @SideOnly(Side.CLIENT)
