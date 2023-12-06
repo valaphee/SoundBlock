@@ -197,44 +197,44 @@ public class SoundBlockEditScreen extends GuiScreen {
         }
 
         public void mouseClicked(int mouseX, int mouseY, int mouseButton) {
-            if (soundEntry.idTextField.getVisible()) {
-                soundEntry.idTextField.mouseClicked(mouseX, mouseY, mouseButton);
+            if (idTextField.getVisible()) {
+                idTextField.mouseClicked(mouseX, mouseY, mouseButton);
             }
-            if (soundEntry.offsetXTextField.getVisible()) {
-                soundEntry.offsetXTextField.mouseClicked(mouseX, mouseY, mouseButton);
+            if (offsetXTextField.getVisible()) {
+                offsetXTextField.mouseClicked(mouseX, mouseY, mouseButton);
             }
-            if (soundEntry.offsetYTextField.getVisible()) {
-                soundEntry.offsetYTextField.mouseClicked(mouseX, mouseY, mouseButton);
+            if (offsetYTextField.getVisible()) {
+                offsetYTextField.mouseClicked(mouseX, mouseY, mouseButton);
             }
-            if (soundEntry.offsetZTextField.getVisible()) {
-                soundEntry.offsetZTextField.mouseClicked(mouseX, mouseY, mouseButton);
+            if (offsetZTextField.getVisible()) {
+                offsetZTextField.mouseClicked(mouseX, mouseY, mouseButton);
             }
-            if (soundEntry.volumeTextField.getVisible()) {
-                soundEntry.volumeTextField.mouseClicked(mouseX, mouseY, mouseButton);
+            if (volumeTextField.getVisible()) {
+                volumeTextField.mouseClicked(mouseX, mouseY, mouseButton);
             }
-            if (soundEntry.pitchTextField.getVisible()) {
-                soundEntry.pitchTextField.mouseClicked(mouseX, mouseY, mouseButton);
+            if (pitchTextField.getVisible()) {
+                pitchTextField.mouseClicked(mouseX, mouseY, mouseButton);
             }
         }
 
         public void keyTyped(char typedChar, int keyCode) {
-            if (soundEntry.idTextField.getVisible()) {
-                soundEntry.idTextField.textboxKeyTyped(typedChar, keyCode);
+            if (idTextField.getVisible()) {
+                idTextField.textboxKeyTyped(typedChar, keyCode);
             }
-            if (soundEntry.offsetXTextField.getVisible()) {
-                soundEntry.offsetXTextField.textboxKeyTyped(typedChar, keyCode);
+            if (offsetXTextField.getVisible()) {
+                offsetXTextField.textboxKeyTyped(typedChar, keyCode);
             }
-            if (soundEntry.offsetYTextField.getVisible()) {
-                soundEntry.offsetYTextField.textboxKeyTyped(typedChar, keyCode);
+            if (offsetYTextField.getVisible()) {
+                offsetYTextField.textboxKeyTyped(typedChar, keyCode);
             }
-            if (soundEntry.offsetZTextField.getVisible()) {
-                soundEntry.offsetZTextField.textboxKeyTyped(typedChar, keyCode);
+            if (offsetZTextField.getVisible()) {
+                offsetZTextField.textboxKeyTyped(typedChar, keyCode);
             }
-            if (soundEntry.volumeTextField.getVisible()) {
-                soundEntry.volumeTextField.textboxKeyTyped(typedChar, keyCode);
+            if (volumeTextField.getVisible()) {
+                volumeTextField.textboxKeyTyped(typedChar, keyCode);
             }
-            if (soundEntry.pitchTextField.getVisible()) {
-                soundEntry.pitchTextField.textboxKeyTyped(typedChar, keyCode);
+            if (pitchTextField.getVisible()) {
+                pitchTextField.textboxKeyTyped(typedChar, keyCode);
             }
         }
     }
