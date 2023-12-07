@@ -1,6 +1,5 @@
 package com.valaphee.sb;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.renderer.GlStateManager;
@@ -9,10 +8,10 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.io.IOException;
+import java.util.List;
 
 @SideOnly(Side.CLIENT)
 public class SoundBlockEditScreen extends GuiScreen {
-
     private static final int GUI_WIDTH = 234;
     private static final int GUI_HEIGHT = 153;
 
@@ -62,76 +61,118 @@ public class SoundBlockEditScreen extends GuiScreen {
     private static final int SCROLLBAR_THUMB_UV_Y = 241;
 
     private static final int ACTIVETAB_WIDTH = 51;
+    private static final int ACTIVETAB_BUTTON_WIDTH = ACTIVETAB_WIDTH - 2;
     private static final int ACTIVETAB_HEIGHT = 20;
     private static final int ACTIVETAB_POS_X = 2;
+    private static final int ACTIVETAB_BUTTON_POS_X = ACTIVETAB_POS_X + 1;
     private static final int ACTIVETAB_POS_Y = 0;
     private static final int ACTIVETAB_UV_X = 120;
     private static final int ACTIVETAB_UV_Y = 236;
 
     private static final ResourceLocation TEXTURE = new ResourceLocation("vsb", "textures/gui/sound_block.png");
 
-    private int componentId = 0;
+    private SoundBlockData soundBlockData;
 
+    private int lastComponentId = 0;
     private int guiOriginX = 0;
     private int guiOriginY = 0;
 
-    private SoundEntry soundEntry;
-    private SoundEntry soundEntry2;
-    private SoundEntry soundEntry3;
+    private int tab = 0;
+    private int entryOffset = 0;
+
+    private Entry sound1Entry;
+    private Entry sound2Entry;
+    private Entry sound3Entry;
+
+    public SoundBlockEditScreen(SoundBlockData soundBlockData) {
+        this.soundBlockData = soundBlockData;
+    }
 
     @Override
     public void initGui() {
+        lastComponentId = 0;
         guiOriginX = (this.width - GUI_WIDTH) / 2;
         guiOriginY = (this.height - GUI_HEIGHT) / 2;
 
-        componentId = 0;
-        soundEntry = new SoundEntry(new SoundBlockData.Sound(), guiOriginX + SOUNDENTRY_POS_X, guiOriginY + SOUNDENTRY_POS_Y);
-        soundEntry2 = new SoundEntry(new SoundBlockData.Sound(), guiOriginX + SOUNDENTRY_POS_X, guiOriginY + SOUNDENTRY_POS_Y + SOUNDENTRY_HEIGHT - GAP_Y);
-        soundEntry3 = new SoundEntry(new SoundBlockData.Sound(), guiOriginX + SOUNDENTRY_POS_X, guiOriginY + SOUNDENTRY_POS_Y + (SOUNDENTRY_HEIGHT - GAP_Y) * 2);
-    }
-
-    @Override
-    public void handleMouseInput() throws IOException {
-        super.handleMouseInput();
-    }
-
-    @Override
-    protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
-        super.mouseClicked(mouseX, mouseY, mouseButton);
-
-        soundEntry.mouseClicked(mouseX, mouseY, mouseButton);
-        soundEntry2.mouseClicked(mouseX, mouseY, mouseButton);
-        soundEntry3.mouseClicked(mouseX, mouseY, mouseButton);
+        sound1Entry = new Entry(0, guiOriginX + SOUNDENTRY_POS_X, guiOriginY + SOUNDENTRY_POS_Y);
+        sound2Entry = new Entry(1, guiOriginX + SOUNDENTRY_POS_X, guiOriginY + SOUNDENTRY_POS_Y + SOUNDENTRY_HEIGHT - GAP_Y);
+        sound3Entry = new Entry(2, guiOriginX + SOUNDENTRY_POS_X, guiOriginY + SOUNDENTRY_POS_Y + (SOUNDENTRY_HEIGHT - GAP_Y) * 2);
     }
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 
+        // Background
         this.mc.getTextureManager().bindTexture(TEXTURE);
         this.drawTexturedModalRect(guiOriginX, guiOriginY, 0, 0, GUI_WIDTH, GUI_HEIGHT);
 
-        // Active tab
-        this.drawTexturedModalRect(guiOriginX + ACTIVETAB_POS_X, guiOriginY + ACTIVETAB_POS_Y, ACTIVETAB_UV_X, ACTIVETAB_UV_Y, ACTIVETAB_WIDTH, ACTIVETAB_HEIGHT);
+        // Tabs
+        this.drawTexturedModalRect(guiOriginX + ACTIVETAB_POS_X + ACTIVETAB_BUTTON_WIDTH * tab, guiOriginY + ACTIVETAB_POS_Y, ACTIVETAB_UV_X, ACTIVETAB_UV_Y, ACTIVETAB_WIDTH, ACTIVETAB_HEIGHT);
 
-        // Scrollbar
-        this.drawTexturedModalRect(guiOriginX + SCROLLBAR_POS_X, guiOriginY + SCROLLBAR_POS_Y, SCROLLBAR_UV_X, SCROLLBAR_UV_Y, SCROLLBAR_WIDTH, SCROLLBAR_HEIGHT);
+        if (tab != 0) {
+            // Scrollbar
+            this.drawTexturedModalRect(guiOriginX + SCROLLBAR_POS_X, guiOriginY + SCROLLBAR_POS_Y, SCROLLBAR_UV_X, SCROLLBAR_UV_Y, SCROLLBAR_WIDTH, SCROLLBAR_HEIGHT);
 
-        // Scrollbar thumb
-        this.drawTexturedModalRect(guiOriginX + SCROLLBAR_THUMB_POS_X, guiOriginY + SCROLLBAR_THUMB_POS_Y, SCROLLBAR_THUMB_UV_X, SCROLLBAR_THUMB_UV_Y, SCROLLBAR_THUMB_WIDTH, SCROLLBAR_THUMB_HEIGHT);
+            // Scrollbar handle
+            this.drawTexturedModalRect(guiOriginX + SCROLLBAR_THUMB_POS_X, guiOriginY + SCROLLBAR_THUMB_POS_Y, SCROLLBAR_THUMB_UV_X, SCROLLBAR_THUMB_UV_Y, SCROLLBAR_THUMB_WIDTH, SCROLLBAR_THUMB_HEIGHT);
 
-        soundEntry.draw();
-        soundEntry2.draw();
-        soundEntry3.draw();
+            // Sound entries
+            sound1Entry.draw();
+            sound2Entry.draw();
+            sound3Entry.draw();
+        }
+    }
+
+    @Override
+    protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
+        super.mouseClicked(mouseX, mouseY, mouseButton);
+
+        int lastTab = tab;
+
+        // Tabs
+        int tabX = guiOriginX + ACTIVETAB_BUTTON_POS_X;
+        int tabY = guiOriginY + ACTIVETAB_POS_Y;
+        if (mouseX >= tabX && mouseY >= tabY && mouseX < tabX + ACTIVETAB_BUTTON_WIDTH && mouseY < tabY + ACTIVETAB_HEIGHT) {
+            tab = 0;
+        }
+        tabX += ACTIVETAB_BUTTON_WIDTH;
+        if (mouseX >= tabX && mouseY >= tabY && mouseX < tabX + ACTIVETAB_BUTTON_WIDTH && mouseY < tabY + ACTIVETAB_HEIGHT) {
+            tab = 1;
+        }
+        tabX += ACTIVETAB_BUTTON_WIDTH;
+        if (mouseX >= tabX && mouseY >= tabY && mouseX < tabX + ACTIVETAB_BUTTON_WIDTH && mouseY < tabY + ACTIVETAB_HEIGHT) {
+            tab = 2;
+        }
+        tabX += ACTIVETAB_BUTTON_WIDTH;
+        if (mouseX >= tabX && mouseY >= tabY && mouseX < tabX + ACTIVETAB_BUTTON_WIDTH && mouseY < tabY + ACTIVETAB_HEIGHT) {
+            tab = 3;
+        }
+
+        // Sound entries
+        if (tab != 0) {
+            if (tab != lastTab) {
+                sound1Entry.load();
+                sound2Entry.load();
+                sound3Entry.load();
+            }
+
+            sound1Entry.mouseClicked(mouseX, mouseY, mouseButton);
+            sound2Entry.mouseClicked(mouseX, mouseY, mouseButton);
+            sound3Entry.mouseClicked(mouseX, mouseY, mouseButton);
+        }
     }
 
     @Override
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
         super.keyTyped(typedChar, keyCode);
 
-        soundEntry.keyTyped(typedChar, keyCode);
-        soundEntry2.keyTyped(typedChar, keyCode);
-        soundEntry3.keyTyped(typedChar, keyCode);
+        // Sound entries
+        if (tab != 0) {
+            sound1Entry.keyTyped(typedChar, keyCode);
+            sound2Entry.keyTyped(typedChar, keyCode);
+            sound3Entry.keyTyped(typedChar, keyCode);
+        }
     }
 
     @Override
@@ -139,8 +180,10 @@ public class SoundBlockEditScreen extends GuiScreen {
         return false;
     }
 
-
-    class SoundEntry {
+    class Entry {
+        private int localEntryOffset;
+        private int originX;
+        private int originY;
 
         private GuiTextField idTextField;
         private GuiTextField offsetXTextField;
@@ -149,29 +192,19 @@ public class SoundBlockEditScreen extends GuiScreen {
         private GuiTextField volumeTextField;
         private GuiTextField pitchTextField;
 
-        private int soundEntryOriginX = 0;
-        private int soundEntryOriginY = 0;
+        public Entry(int localEntryOffset, int originX, int originY) {
+            this.localEntryOffset = localEntryOffset;
+            this.originX = originX;
+            this.originY = originY;
 
-        public SoundEntry(SoundBlockData.Sound sound, int posX, int posY) {
-            soundEntryOriginX = posX;
-            soundEntryOriginY = posY;
-
-            int startX = posX + GAP_X * 2;
-            int startY = posY + GAP_Y * 2;
-
-            idTextField      = new GuiTextField(componentId++, mc.fontRenderer, startX + TEXTFIELD_BORDER + BUTTON_WIDTH + GAP_X, startY + TEXTFIELD_BORDER, TEXTFIELD_WIDTH_SOUNDID - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
-            offsetXTextField = new GuiTextField(componentId++, mc.fontRenderer, startX + TEXTFIELD_BORDER + BUTTON_WIDTH + GAP_X, startY + TEXTFIELD_BORDER + LINE_HEIGHT + GAP_Y, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
-            offsetYTextField = new GuiTextField(componentId++, mc.fontRenderer, startX + TEXTFIELD_BORDER + BUTTON_WIDTH + TEXTFIELD_WIDTH_NUMBER + GAP_X * 2, startY + TEXTFIELD_BORDER + LINE_HEIGHT + GAP_Y, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
-            offsetZTextField = new GuiTextField(componentId++, mc.fontRenderer, startX + TEXTFIELD_BORDER + BUTTON_WIDTH + TEXTFIELD_WIDTH_NUMBER * 2 + GAP_X * 3, startY + TEXTFIELD_BORDER + LINE_HEIGHT + GAP_Y, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
-            volumeTextField  = new GuiTextField(componentId++, mc.fontRenderer, startX + TEXTFIELD_BORDER + BUTTON_WIDTH * 3 + TEXTFIELD_WIDTH_NUMBER * 3 + GAP_X * 6, startY + TEXTFIELD_BORDER + LINE_HEIGHT + GAP_Y, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
-            pitchTextField   = new GuiTextField(componentId++, mc.fontRenderer, startX + TEXTFIELD_BORDER + BUTTON_WIDTH * 3 + TEXTFIELD_WIDTH_NUMBER * 4 + GAP_X * 7, startY + TEXTFIELD_BORDER + LINE_HEIGHT + GAP_Y, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
-
-            idTextField.setText(sound.getId());
-            offsetXTextField.setText(((Double) sound.getOffsetX()).toString());
-            offsetYTextField.setText(((Double) sound.getOffsetY()).toString());
-            offsetZTextField.setText(((Double) sound.getOffsetZ()).toString());
-            volumeTextField.setText(((Float) sound.getVolume()).toString());
-            pitchTextField.setText(((Float) sound.getPitch()).toString());
+            int startX = originX + GAP_X * 2;
+            int startY = originY + GAP_Y * 2;
+            idTextField = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + TEXTFIELD_BORDER + BUTTON_WIDTH + GAP_X, startY + TEXTFIELD_BORDER, TEXTFIELD_WIDTH_SOUNDID - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
+            offsetXTextField = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + TEXTFIELD_BORDER + BUTTON_WIDTH + GAP_X, startY + TEXTFIELD_BORDER + LINE_HEIGHT + GAP_Y, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
+            offsetYTextField = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + TEXTFIELD_BORDER + BUTTON_WIDTH + TEXTFIELD_WIDTH_NUMBER + GAP_X * 2, startY + TEXTFIELD_BORDER + LINE_HEIGHT + GAP_Y, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
+            offsetZTextField = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + TEXTFIELD_BORDER + BUTTON_WIDTH + TEXTFIELD_WIDTH_NUMBER * 2 + GAP_X * 3, startY + TEXTFIELD_BORDER + LINE_HEIGHT + GAP_Y, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
+            volumeTextField = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + TEXTFIELD_BORDER + BUTTON_WIDTH * 3 + TEXTFIELD_WIDTH_NUMBER * 3 + GAP_X * 6, startY + TEXTFIELD_BORDER + LINE_HEIGHT + GAP_Y, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
+            pitchTextField = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + TEXTFIELD_BORDER + BUTTON_WIDTH * 3 + TEXTFIELD_WIDTH_NUMBER * 4 + GAP_X * 7, startY + TEXTFIELD_BORDER + LINE_HEIGHT + GAP_Y, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
 
             idTextField.setMaxStringLength(256);
             offsetXTextField.setMaxStringLength(8);
@@ -179,13 +212,34 @@ public class SoundBlockEditScreen extends GuiScreen {
             offsetZTextField.setMaxStringLength(8);
             volumeTextField.setMaxStringLength(8);
             pitchTextField.setMaxStringLength(8);
+
+            load();
+        }
+
+        public void load() {
+            List<SoundBlockData.Sound> soundList = tab == 1 ? soundBlockData.getIntro() : tab == 2 ? soundBlockData.getLoop() : soundBlockData.getOutro();
+            if (entryOffset + localEntryOffset < soundList.size()) {
+                SoundBlockData.Sound sound = soundList.get(entryOffset + localEntryOffset);
+                idTextField.setText(sound.getId());
+                offsetXTextField.setText(((Double) sound.getOffsetX()).toString());
+                offsetYTextField.setText(((Double) sound.getOffsetY()).toString());
+                offsetZTextField.setText(((Double) sound.getOffsetZ()).toString());
+                volumeTextField.setText(((Float) sound.getVolume()).toString());
+                pitchTextField.setText(((Float) sound.getPitch()).toString());
+            } else {
+                idTextField.setVisible(false);
+                offsetXTextField.setVisible(false);
+                offsetYTextField.setVisible(false);
+                offsetZTextField.setVisible(false);
+                volumeTextField.setVisible(false);
+                pitchTextField.setVisible(false);
+            }
         }
 
         public void draw() {
-
             // Background
             mc.getTextureManager().bindTexture(TEXTURE);
-            drawTexturedModalRect(soundEntryOriginX, soundEntryOriginY, SOUNDENTRY_UV_X, SOUNDENTRY_UV_Y, SOUNDENTRY_WIDTH, SOUNDENTRY_HEIGHT);
+            drawTexturedModalRect(originX, originY, SOUNDENTRY_UV_X, SOUNDENTRY_UV_Y, SOUNDENTRY_WIDTH, SOUNDENTRY_HEIGHT);
 
             // Text fields
             idTextField.drawTextBox();

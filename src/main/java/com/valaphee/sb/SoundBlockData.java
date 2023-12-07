@@ -5,8 +5,11 @@ import lombok.Setter;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +28,8 @@ public class SoundBlockData extends TileEntity {
     private final List<Sound> intro = new ArrayList<>();
     private final List<Sound> loop = new ArrayList<>();
     private final List<Sound> outro = new ArrayList<>();
+
+    // Unserialized state
     private boolean unloaded = false;
 
     @Override
@@ -103,8 +108,29 @@ public class SoundBlockData extends TileEntity {
         return compound;
     }
 
+    @Nullable
+    @Override
+    public SPacketUpdateTileEntity getUpdatePacket() {
+        return new SPacketUpdateTileEntity(pos, 1293, getUpdateTag());
+    }
+
+    @Override
+    public NBTTagCompound getUpdateTag() {
+        return writeToNBT(new NBTTagCompound());
+    }
+
+    @Override
+    public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) {
+        super.onDataPacket(net, pkt);
+        readFromNBT(pkt.getNbtCompound());
+    }
+
     @Override
     public void onLoad() {
+        if (world.isRemote) {
+            return;
+        }
+
         Main.instance.continueLoop(this);
     }
 
