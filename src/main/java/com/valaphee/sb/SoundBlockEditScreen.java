@@ -1,5 +1,7 @@
 package com.valaphee.sb;
 
+import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.renderer.GlStateManager;
@@ -118,9 +120,9 @@ public class SoundBlockEditScreen extends GuiScreen {
             this.drawTexturedModalRect(guiOriginX + SCROLLBAR_THUMB_POS_X, guiOriginY + SCROLLBAR_THUMB_POS_Y, SCROLLBAR_THUMB_UV_X, SCROLLBAR_THUMB_UV_Y, SCROLLBAR_THUMB_WIDTH, SCROLLBAR_THUMB_HEIGHT);
 
             // Sound entries
-            sound1Entry.draw();
-            sound2Entry.draw();
-            sound3Entry.draw();
+            sound1Entry.draw(mouseX, mouseY, partialTicks);
+            sound2Entry.draw(mouseX, mouseY, partialTicks);
+            sound3Entry.draw(mouseX, mouseY, partialTicks);
         }
     }
 
@@ -152,9 +154,7 @@ public class SoundBlockEditScreen extends GuiScreen {
         // Sound entries
         if (tab != 0) {
             if (tab != lastTab) {
-                sound1Entry.load();
-                sound2Entry.load();
-                sound3Entry.load();
+                refreshAllStates();
             }
 
             sound1Entry.mouseClicked(mouseX, mouseY, mouseButton);
@@ -180,6 +180,16 @@ public class SoundBlockEditScreen extends GuiScreen {
         return false;
     }
 
+    private List<SoundBlockData.Sound> getActiveSoundList() {
+        return tab == 1 ? soundBlockData.getIntro() : tab == 2 ? soundBlockData.getLoop() : soundBlockData.getOutro();
+    }
+
+    private void refreshAllStates() {
+        sound1Entry.refreshState();
+        sound2Entry.refreshState();
+        sound3Entry.refreshState();
+    }
+
     class Entry {
         private int localEntryOffset;
         private int originX;
@@ -191,6 +201,11 @@ public class SoundBlockEditScreen extends GuiScreen {
         private GuiTextField offsetZTextField;
         private GuiTextField volumeTextField;
         private GuiTextField pitchTextField;
+
+        private Button buttonAdd;
+        private Button buttonRemove;
+        private Button buttonMoveUp;
+        private Button buttonMoveDown;
 
         public Entry(int localEntryOffset, int originX, int originY) {
             this.localEntryOffset = localEntryOffset;
@@ -213,12 +228,29 @@ public class SoundBlockEditScreen extends GuiScreen {
             volumeTextField.setMaxStringLength(8);
             pitchTextField.setMaxStringLength(8);
 
-            load();
+            // Add/Remove
+            buttonAdd = new Button(startX, startY, BUTTON_ADD_UV_X, BUTTON_ADD_UV_Y, BUTTON_WIDTH, LINE_HEIGHT);
+            buttonRemove = new Button(startX, startY + LINE_HEIGHT + GAP_Y, BUTTON_REMOVE_UV_X, BUTTON_REMOVE_UV_Y, BUTTON_WIDTH, LINE_HEIGHT);
+
+            // Arrows
+            buttonMoveUp = new Button(startX + TEXTFIELD_WIDTH_SOUNDID + BUTTON_WIDTH + GAP_X * 2, startY, ARROW_UP_UV_X, ARROW_UP_UV_Y, ARROW_WIDTH, LINE_HEIGHT);
+            buttonMoveDown = new Button(startX + TEXTFIELD_WIDTH_SOUNDID + BUTTON_WIDTH + GAP_X * 2, startY + LINE_HEIGHT + GAP_Y, ARROW_DOWN_UV_X, ARROW_DOWN_UV_Y, ARROW_WIDTH, LINE_HEIGHT);
+
+            // Tickboxes
+            //drawTexturedModalRect(startX + TEXTFIELD_WIDTH_NUMBER * 3 + BUTTON_WIDTH + GAP_X * 4, startY + LINE_HEIGHT + GAP_Y, TICKBOX_EMPTY_UV_X, TICKBOX_EMPTY_UV_Y, BUTTON_WIDTH, LINE_HEIGHT);
+            //drawTexturedModalRect(startX + TEXTFIELD_WIDTH_NUMBER * 3 + BUTTON_WIDTH * 2 + GAP_X * 5, startY + LINE_HEIGHT + GAP_Y, TICKBOX_EMPTY_UV_X, TICKBOX_EMPTY_UV_Y, BUTTON_WIDTH, LINE_HEIGHT);
+
+            refreshState();
         }
 
-        public void load() {
-            List<SoundBlockData.Sound> soundList = tab == 1 ? soundBlockData.getIntro() : tab == 2 ? soundBlockData.getLoop() : soundBlockData.getOutro();
-            if (entryOffset + localEntryOffset < soundList.size()) {
+        public void refreshState() {
+            List<SoundBlockData.Sound> soundList = getActiveSoundList();
+
+            int index = entryOffset + localEntryOffset;
+            int size = soundList.size();
+            boolean isVisible = index < size;
+
+            if (isVisible) {
                 SoundBlockData.Sound sound = soundList.get(entryOffset + localEntryOffset);
                 idTextField.setText(sound.getId());
                 offsetXTextField.setText(((Double) sound.getOffsetX()).toString());
@@ -226,17 +258,22 @@ public class SoundBlockEditScreen extends GuiScreen {
                 offsetZTextField.setText(((Double) sound.getOffsetZ()).toString());
                 volumeTextField.setText(((Float) sound.getVolume()).toString());
                 pitchTextField.setText(((Float) sound.getPitch()).toString());
-            } else {
-                idTextField.setVisible(false);
-                offsetXTextField.setVisible(false);
-                offsetYTextField.setVisible(false);
-                offsetZTextField.setVisible(false);
-                volumeTextField.setVisible(false);
-                pitchTextField.setVisible(false);
             }
+
+            idTextField.setVisible(isVisible);
+            offsetXTextField.setVisible(isVisible);
+            offsetYTextField.setVisible(isVisible);
+            offsetZTextField.setVisible(isVisible);
+            volumeTextField.setVisible(isVisible);
+            pitchTextField.setVisible(isVisible);
+
+            buttonAdd.setVisible(index <= size);
+            buttonRemove.setVisible(isVisible);
+            buttonMoveUp.setVisible(isVisible && index > 0);
+            buttonMoveDown.setVisible(index < size - 1);
         }
 
-        public void draw() {
+        public void draw(int mouseX, int mouseY, float partialTicks) {
             // Background
             mc.getTextureManager().bindTexture(TEXTURE);
             drawTexturedModalRect(originX, originY, SOUNDENTRY_UV_X, SOUNDENTRY_UV_Y, SOUNDENTRY_WIDTH, SOUNDENTRY_HEIGHT);
@@ -248,6 +285,14 @@ public class SoundBlockEditScreen extends GuiScreen {
             offsetZTextField.drawTextBox();
             volumeTextField.drawTextBox();
             pitchTextField.drawTextBox();
+
+            List<SoundBlockData.Sound> soundList = getActiveSoundList();
+            int soundListIndex = entryOffset + localEntryOffset;
+
+            buttonAdd.draw(mouseX, mouseY, partialTicks);
+            buttonRemove.draw(mouseX, mouseY, partialTicks);
+            buttonMoveUp.draw(mouseX, mouseY, partialTicks);
+            buttonMoveDown.draw(mouseX, mouseY, partialTicks);
         }
 
         public void mouseClicked(int mouseX, int mouseY, int mouseButton) {
@@ -268,6 +313,52 @@ public class SoundBlockEditScreen extends GuiScreen {
             }
             if (pitchTextField.getVisible()) {
                 pitchTextField.mouseClicked(mouseX, mouseY, mouseButton);
+            }
+
+            // Add / Remove
+            if (buttonAdd.mouseClicked(mouseX, mouseY, mouseButton)) {
+                List<SoundBlockData.Sound> soundList = getActiveSoundList();
+                int soundListIndex = entryOffset + localEntryOffset;
+
+                if (soundListIndex < soundList.size()) {
+                    soundList.add(soundListIndex, new SoundBlockData.Sound());
+                } else {
+                    soundList.add(new SoundBlockData.Sound());
+                }
+                refreshAllStates();
+            }
+            if (buttonRemove.mouseClicked(mouseX, mouseY, mouseButton)) {
+                List<SoundBlockData.Sound> soundList = getActiveSoundList();
+                int soundListIndex = entryOffset + localEntryOffset;
+
+                if (soundListIndex < soundList.size()) {
+                    soundList.remove(soundListIndex);
+                    refreshAllStates();
+                }
+            }
+
+            // Arrows
+            if (buttonMoveUp.mouseClicked(mouseX, mouseY, mouseButton)) {
+                List<SoundBlockData.Sound> soundList = getActiveSoundList();
+                int soundListIndex = entryOffset + localEntryOffset;
+
+                if (soundListIndex > 0) {
+                    SoundBlockData.Sound sound = soundList.get(soundListIndex);
+                    SoundBlockData.Sound sound2 = soundList.set(soundListIndex - 1, sound);
+                    soundList.set(soundListIndex, sound2);
+                    refreshAllStates();
+                }
+            }
+            if (buttonMoveDown.mouseClicked(mouseX, mouseY, mouseButton)) {
+                List<SoundBlockData.Sound> soundList = getActiveSoundList();
+                int soundListIndex = entryOffset + localEntryOffset;
+
+                if (soundListIndex < soundList.size() - 1) {
+                    SoundBlockData.Sound sound = soundList.get(soundListIndex);
+                    SoundBlockData.Sound sound2 = soundList.set(soundListIndex + 1, sound);
+                    soundList.set(soundListIndex, sound2);
+                    refreshAllStates();
+                }
             }
         }
 
@@ -290,6 +381,52 @@ public class SoundBlockEditScreen extends GuiScreen {
             if (pitchTextField.getVisible()) {
                 pitchTextField.textboxKeyTyped(typedChar, keyCode);
             }
+        }
+    }
+
+    public class Button {
+
+        private static final int UV_OFFSET_X_HOVERED = 1; // Multiplier for the "hovered" state UV's X position (times width)
+        private static final int UV_OFFSET_Y_HOVERED = 0; // Multiplier for the "hovered" state UV's Y position (times height)
+
+        private int buttonX;
+        private int buttonY;
+        private int buttonUV_x;
+        private int buttonUV_y;
+        private int buttonWidth;
+        private int buttonHeight;
+
+        @Getter
+        @Setter
+        private boolean visible = false;
+
+        public Button(int originX, int originY, int UV_x, int UV_y, int width, int height) {
+            buttonX = originX;
+            buttonY = originY;
+            buttonUV_x = UV_x;
+            buttonUV_y = UV_y;
+            buttonWidth = width;
+            buttonHeight = height;
+        }
+
+        public void draw(int mouseX, int mouseY, float partialTicks) {
+            if (visible) {
+                mc.getTextureManager().bindTexture(TEXTURE);
+
+                if (isPositionAboveButton(mouseX, mouseY)) {
+                    drawTexturedModalRect(buttonX, buttonY, buttonUV_x + UV_OFFSET_X_HOVERED * buttonWidth, buttonUV_y + UV_OFFSET_Y_HOVERED * buttonHeight, buttonWidth, buttonHeight);
+                } else {
+                    drawTexturedModalRect(buttonX, buttonY, buttonUV_x, buttonUV_y, buttonWidth, buttonHeight);
+                }
+            }
+        }
+
+        public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) {
+            return this.visible && isPositionAboveButton(mouseX, mouseY);
+        }
+
+        private boolean isPositionAboveButton(int mouseX, int mouseY) {
+            return mouseX >= this.buttonX && mouseY >= this.buttonY && mouseX < this.buttonX + this.buttonWidth && mouseY < this.buttonY + this.buttonHeight;
         }
     }
 }
