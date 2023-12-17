@@ -43,13 +43,36 @@ public class SoundBlock extends Block implements ITileEntityProvider {
             if (!soundBlockData.isPowered()) {
                 soundBlockData.setPowered(true);
 
-                Main.instance.playIntro(soundBlockData);
+                Block soundBlock = worldIn.getBlockState(pos).getBlock();
+                worldIn.addBlockEvent(pos, soundBlock, 0, 0);
             }
         } else if (soundBlockData.isPowered()) {
             soundBlockData.setPowered(false);
 
-            Main.instance.playOutro(soundBlockData);
+            Block soundBlock = worldIn.getBlockState(pos).getBlock();
+            worldIn.addBlockEvent(pos, soundBlock, 0, 1);
         }
+    }
+
+    @Override
+    public boolean eventReceived(IBlockState state, World worldIn, BlockPos pos, int id, int param) {
+        if (!worldIn.isRemote) {
+            return true;
+        }
+
+        if (id == 0) {
+            if (param == 0) {
+                SoundBlockData soundBlockData = (SoundBlockData) worldIn.getTileEntity(pos);
+                soundBlockData.setPowered(true);
+                Main.instance.playIntro(soundBlockData);
+            } else if (param == 1) {
+                SoundBlockData soundBlockData = (SoundBlockData) worldIn.getTileEntity(pos);
+                soundBlockData.setPowered(false);
+                Main.instance.playOutro(soundBlockData);
+            }
+        }
+
+        return true;
     }
 
     @Nullable

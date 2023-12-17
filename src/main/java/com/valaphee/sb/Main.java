@@ -3,6 +3,7 @@ package com.valaphee.sb;
 import lombok.AllArgsConstructor;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.audio.SoundHandler;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
@@ -33,10 +34,6 @@ public class Main {
     public static Main instance;
     public static Logger logger;
 
-    public Main() {
-        MinecraftForge.EVENT_BUS.register(this);
-    }
-
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         logger = event.getModLog();
@@ -45,6 +42,7 @@ public class Main {
     @EventHandler
     public void init(FMLInitializationEvent event) {
         NetworkRegistry.INSTANCE.registerGuiHandler(this, new GuiHandler());
+        MinecraftForge.EVENT_BUS.register(this);
     }
 
     @SubscribeEvent
@@ -64,9 +62,11 @@ public class Main {
     private Map<BlockPos, DelayedSounds> delayedSounds = new HashMap<>();
 
     public void playIntro(SoundBlockData soundBlockData) {
+        SoundHandler soundHandler = Minecraft.getMinecraft().getSoundHandler();
+
         List<SoundBlockData.Sound> introSounds = soundBlockData.getIntro();
         for (SoundBlockData.Sound sound : introSounds) {
-            Minecraft.getMinecraft().getSoundHandler().playSound(new SoundBlockSound(soundBlockData, sound, false));
+            soundHandler.playSound(new SoundBlockSound(soundBlockData, sound, false));
         }
 
         // Only allow delaying one sound group per block
@@ -78,7 +78,7 @@ public class Main {
         DelayedSounds previousDelayedSounds = this.delayedSounds.put(soundBlockData.getPos(), new DelayedSounds(loopSoundsFinalized, soundBlockData.getLoopDelay()));
         if (previousDelayedSounds != null) {
             for (SoundBlockSound sound : previousDelayedSounds.sounds) {
-                Minecraft.getMinecraft().getSoundHandler().stopSound(sound);
+                soundHandler.stopSound(sound);
             }
         }
     }
@@ -98,14 +98,22 @@ public class Main {
     }
 
     public void playOutro(SoundBlockData soundBlockData) {
+        SoundHandler soundHandler = Minecraft.getMinecraft().getSoundHandler();
+
         List<SoundBlockData.Sound> outroSounds = soundBlockData.getOutro();
         for (SoundBlockData.Sound sound : outroSounds) {
-            Minecraft.getMinecraft().getSoundHandler().playSound(new SoundBlockSound(soundBlockData, sound, false));
+            soundHandler.playSound(new SoundBlockSound(soundBlockData, sound, false));
         }
     }
 
     @SubscribeEvent
     public void tick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.START) {
+            return;
+        }
+
+        SoundHandler soundHandler = Minecraft.getMinecraft().getSoundHandler();
+
         // Check if delayed sound can be played
         Iterator<Map.Entry<BlockPos, DelayedSounds>> delayedSoundIterator = delayedSounds.entrySet().iterator();
         while (delayedSoundIterator.hasNext()) {
@@ -117,7 +125,7 @@ public class Main {
             delayedSoundIterator.remove();
 
             for (SoundBlockSound sound : delayedSound.getValue().sounds) {
-                Minecraft.getMinecraft().getSoundHandler().playSound(sound);
+                soundHandler.playSound(sound);
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.valaphee.sb;
 
+import com.google.common.base.Predicate;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.gui.GuiScreen;
@@ -83,6 +84,7 @@ public class SoundBlockEditScreen extends GuiScreen {
     private Entry sound1Entry;
     private Entry sound2Entry;
     private Entry sound3Entry;
+    private Scrollbar scrollbar;
 
     public SoundBlockEditScreen(SoundBlockData soundBlockData) {
         this.soundBlockData = soundBlockData;
@@ -97,6 +99,8 @@ public class SoundBlockEditScreen extends GuiScreen {
         sound1Entry = new Entry(0, guiOriginX + SOUNDENTRY_POS_X, guiOriginY + SOUNDENTRY_POS_Y);
         sound2Entry = new Entry(1, guiOriginX + SOUNDENTRY_POS_X, guiOriginY + SOUNDENTRY_POS_Y + SOUNDENTRY_HEIGHT - GAP_Y);
         sound3Entry = new Entry(2, guiOriginX + SOUNDENTRY_POS_X, guiOriginY + SOUNDENTRY_POS_Y + (SOUNDENTRY_HEIGHT - GAP_Y) * 2);
+
+        scrollbar = new Scrollbar(guiOriginX + SCROLLBAR_THUMB_POS_X, guiOriginY + SCROLLBAR_THUMB_POS_Y, SCROLLBAR_THUMB_UV_X, SCROLLBAR_THUMB_UV_Y, SCROLLBAR_THUMB_WIDTH, SCROLLBAR_THUMB_HEIGHT, SCROLLBAR_HEIGHT, 1);
     }
 
     @Override
@@ -111,16 +115,15 @@ public class SoundBlockEditScreen extends GuiScreen {
         this.drawTexturedModalRect(guiOriginX + ACTIVETAB_POS_X + ACTIVETAB_BUTTON_WIDTH * tab, guiOriginY + ACTIVETAB_POS_Y, ACTIVETAB_UV_X, ACTIVETAB_UV_Y, ACTIVETAB_WIDTH, ACTIVETAB_HEIGHT);
 
         if (tab != 0) {
-            // Scrollbar
-            this.drawTexturedModalRect(guiOriginX + SCROLLBAR_POS_X, guiOriginY + SCROLLBAR_POS_Y, SCROLLBAR_UV_X, SCROLLBAR_UV_Y, SCROLLBAR_WIDTH, SCROLLBAR_HEIGHT);
-
-            // Scrollbar handle
-            this.drawTexturedModalRect(guiOriginX + SCROLLBAR_THUMB_POS_X, guiOriginY + SCROLLBAR_THUMB_POS_Y, SCROLLBAR_THUMB_UV_X, SCROLLBAR_THUMB_UV_Y, SCROLLBAR_THUMB_WIDTH, SCROLLBAR_THUMB_HEIGHT);
 
             // Sound entries
             sound1Entry.draw(mouseX, mouseY, partialTicks);
             sound2Entry.draw(mouseX, mouseY, partialTicks);
             sound3Entry.draw(mouseX, mouseY, partialTicks);
+
+            // Scrollbar
+            this.drawTexturedModalRect(guiOriginX + SCROLLBAR_POS_X, guiOriginY + SCROLLBAR_POS_Y, SCROLLBAR_UV_X, SCROLLBAR_UV_Y, SCROLLBAR_WIDTH, SCROLLBAR_HEIGHT);
+            scrollbar.draw(mouseX, mouseY, partialTicks);
         }
     }
 
@@ -149,15 +152,38 @@ public class SoundBlockEditScreen extends GuiScreen {
             tab = 3;
         }
 
-        // Sound entries
+        scrollbar.setVisible(tab != 0);
+
         if (tab != 0) {
             if (tab != lastTab) {
                 refreshAllStates();
             }
 
+            // Sound entries
             sound1Entry.mouseClicked(mouseX, mouseY, mouseButton);
             sound2Entry.mouseClicked(mouseX, mouseY, mouseButton);
             sound3Entry.mouseClicked(mouseX, mouseY, mouseButton);
+
+            // Scrollbar
+            scrollbar.mouseClicked(mouseX, mouseY, mouseButton);
+        }
+    }
+
+    @Override
+    protected void mouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
+        super.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick);
+
+        if (tab != 0) {
+            scrollbar.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick);
+        }
+    }
+
+    @Override
+    protected void mouseReleased(int mouseX, int mouseY, int releasedMouseButton) {
+        super.mouseReleased(mouseX, mouseY, releasedMouseButton);
+
+        if (tab != 0) {
+            scrollbar.mouseReleased(mouseX, mouseY, releasedMouseButton);
         }
     }
 
@@ -188,6 +214,9 @@ public class SoundBlockEditScreen extends GuiScreen {
     }
 
     private void refreshAllStates() {
+        List<SoundBlockData.Sound> soundList = getActiveSoundList();
+        scrollbar.setPositions(soundList.size() - 3);
+
         sound1Entry.refreshState();
         sound2Entry.refreshState();
         sound3Entry.refreshState();
@@ -196,7 +225,7 @@ public class SoundBlockEditScreen extends GuiScreen {
     private static float parseAsFloat(String text, float defaultValue) {
         try {
             return Float.parseFloat(text);
-        } catch(Exception e) {
+        } catch(NumberFormatException e) {
             return defaultValue;
         }
     }
@@ -204,7 +233,7 @@ public class SoundBlockEditScreen extends GuiScreen {
     private static double parseAsDouble(String text, double defaultValue) {
         try {
             return Double.parseDouble(text);
-        } catch(Exception e) {
+        } catch(NumberFormatException e) {
             return defaultValue;
         }
     }
@@ -255,6 +284,47 @@ public class SoundBlockEditScreen extends GuiScreen {
             offsetZTextField.setMaxStringLength(8);
             volumeTextField.setMaxStringLength(8);
             pitchTextField.setMaxStringLength(8);
+
+            // Custom text field validators
+            Predicate<String> isValidDouble = (value) -> {
+                if (value.isEmpty()) {
+                    return true;
+                }
+                try {
+                    Double.parseDouble(value);
+                    return true;
+                } catch (NumberFormatException ignored) {
+                    return false;
+                }
+            };
+            Predicate<String> isValidVolume = (value) -> {
+                if (value.isEmpty()) {
+                    return true;
+                }
+                try {
+                    Double.parseDouble(value);
+                    return true;
+                } catch (NumberFormatException ignored) {
+                    return false;
+                }
+            };
+            Predicate<String> isValidPitch = (value) -> {
+                if (value.isEmpty()) {
+                    return true;
+                }
+                try {
+                   Double.parseDouble(value);
+                    return true;
+                } catch (NumberFormatException ignored) {
+                    return false;
+                }
+            };
+
+            offsetXTextField.setValidator(isValidDouble);
+            offsetYTextField.setValidator(isValidDouble);
+            offsetZTextField.setValidator(isValidDouble);
+            volumeTextField.setValidator(isValidVolume);
+            pitchTextField.setValidator(isValidPitch);
 
             // Add/Remove
             buttonAdd = new Button(startX, startY, BUTTON_ADD_UV_X, BUTTON_ADD_UV_Y, BUTTON_WIDTH, LINE_HEIGHT);
@@ -518,6 +588,65 @@ public class SoundBlockEditScreen extends GuiScreen {
                 int coefCheckedY = checked ? UV_OFFSET_Y_CHECKED : 0;
 
                 drawTexturedModalRect(buttonX, buttonY, buttonUV_x + (coefHoveredX + coefCheckedX) * buttonWidth, buttonUV_y + (coefHoveredY + coefCheckedY) * buttonHeight, buttonWidth, buttonHeight);
+            }
+        }
+    }
+
+    public class Scrollbar extends Button {
+
+        private int scrollableHeight;
+        private int position;
+
+        @Getter
+        @Setter
+        private int positions;
+
+        private boolean inUse;
+
+        public Scrollbar(int originX, int originY, int UV_x, int UV_y, int width, int height, int argScrollableHeight, int argPositions) {
+            super(originX, originY, UV_x, UV_y, width, height);
+
+            scrollableHeight = argScrollableHeight;
+            positions = argPositions;
+
+            position = 1;
+            inUse = false;
+        }
+
+        @Override
+        public void draw(int mouseX, int mouseY, float partialTicks) {
+            if (isVisible()) {
+                GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+                mc.getTextureManager().bindTexture(TEXTURE);
+
+                boolean hovering = inUse || isPositionAboveButton(mouseX, mouseY);
+                int coefHoveredX = hovering ? UV_OFFSET_X_HOVERED : 0;
+                int coefHoveredY = hovering ? UV_OFFSET_Y_HOVERED : 0;
+
+                drawTexturedModalRect(buttonX, buttonY, buttonUV_x + coefHoveredX * buttonWidth, buttonUV_y + coefHoveredY * buttonHeight, buttonWidth, buttonHeight);
+            }
+        }
+
+        @Override
+        public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) {
+            boolean result = isVisible() && mouseButton == 0 && isPositionAboveButton(mouseX, mouseY);
+
+            if (result) {
+                inUse = true;
+            }
+
+            return result;
+        }
+
+        public void mouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
+            if (clickedMouseButton == 0) {
+
+            }
+        }
+
+        public void mouseReleased(int mouseX, int mouseY, int releasedMouseButton) {
+            if (releasedMouseButton == 0) {
+                inUse = false;
             }
         }
     }
