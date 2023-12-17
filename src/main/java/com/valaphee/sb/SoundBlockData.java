@@ -148,6 +148,8 @@ public class SoundBlockData extends TileEntity {
         private double offsetZ = 0.0;
         private float volume = 1.0f;
         private float pitch = 1.0f;
+        private boolean stopOnEnter = true;
+        private boolean stopOnExit = true;
 
         public void readFromNbt(NBTTagCompound compound) {
             id = compound.getString("id");
@@ -156,6 +158,8 @@ public class SoundBlockData extends TileEntity {
             offsetZ = compound.getDouble("ofz");
             volume = compound.getFloat("vol");
             pitch = compound.getFloat("pit");
+            stopOnEnter = !compound.getBoolean("pent"); // Default: don't play on enter ( = stop on enter)
+            stopOnExit = !compound.getBoolean("pext"); // Same for exit
         }
 
         public void writeToNbt(NBTTagCompound compound) {
@@ -165,6 +169,8 @@ public class SoundBlockData extends TileEntity {
             compound.setDouble("ofx", offsetX);
             compound.setFloat("vol", volume);
             compound.setFloat("pit", pitch);
+            compound.setBoolean("pent", !stopOnEnter);
+            compound.setBoolean("pext", !stopOnExit);
         }
     }
 }

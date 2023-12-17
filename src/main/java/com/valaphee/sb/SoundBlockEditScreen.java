@@ -37,10 +37,8 @@ public class SoundBlockEditScreen extends GuiScreen {
     private static final int BUTTON_ADD_UV_Y = 224;
     private static final int BUTTON_REMOVE_UV_X = 64;
     private static final int BUTTON_REMOVE_UV_Y = 224;
-    private static final int TICKBOX_EMPTY_UV_X = 32;
-    private static final int TICKBOX_EMPTY_UV_Y = 240;
-    private static final int TICKBOX_TICKED_UV_X = 64;
-    private static final int TICKBOX_TICKED_UV_Y = 240;
+    private static final int CHECKBOX_UV_X = 32;
+    private static final int CHECKBOX_UV_Y = 240;
 
     private static final int ARROW_WIDTH = 12;
     private static final int ARROW_DOWN_UV_X = 0;
@@ -180,6 +178,11 @@ public class SoundBlockEditScreen extends GuiScreen {
         return false;
     }
 
+    @Override
+    public void onGuiClosed() {
+        soundBlockData.markDirty();
+    }
+
     private List<SoundBlockData.Sound> getActiveSoundList() {
         return tab == 1 ? soundBlockData.getIntro() : tab == 2 ? soundBlockData.getLoop() : soundBlockData.getOutro();
     }
@@ -190,10 +193,28 @@ public class SoundBlockEditScreen extends GuiScreen {
         sound3Entry.refreshState();
     }
 
+    private static float parseAsFloat(String text, float defaultValue) {
+        try {
+            return Float.parseFloat(text);
+        } catch(Exception e) {
+            return defaultValue;
+        }
+    }
+
+    private static double parseAsDouble(String text, double defaultValue) {
+        try {
+            return Double.parseDouble(text);
+        } catch(Exception e) {
+            return defaultValue;
+        }
+    }
+
     class Entry {
         private int localEntryOffset;
         private int originX;
         private int originY;
+
+        private SoundBlockData.Sound soundData;
 
         private GuiTextField idTextField;
         private GuiTextField offsetXTextField;
@@ -206,11 +227,18 @@ public class SoundBlockEditScreen extends GuiScreen {
         private Button buttonRemove;
         private Button buttonMoveUp;
         private Button buttonMoveDown;
+        private CheckBox checkboxOnEnter;
+        private CheckBox checkboxOnExit;
+
+        private boolean checkboxStateOnEnter = false;
+        private boolean checkboxStateOnExit = false;
 
         public Entry(int localEntryOffset, int originX, int originY) {
             this.localEntryOffset = localEntryOffset;
             this.originX = originX;
             this.originY = originY;
+            this.checkboxStateOnEnter = false;
+            this.checkboxStateOnExit = false;
 
             int startX = originX + GAP_X * 2;
             int startY = originY + GAP_Y * 2;
@@ -221,7 +249,7 @@ public class SoundBlockEditScreen extends GuiScreen {
             volumeTextField = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + TEXTFIELD_BORDER + BUTTON_WIDTH * 3 + TEXTFIELD_WIDTH_NUMBER * 3 + GAP_X * 6, startY + TEXTFIELD_BORDER + LINE_HEIGHT + GAP_Y, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
             pitchTextField = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + TEXTFIELD_BORDER + BUTTON_WIDTH * 3 + TEXTFIELD_WIDTH_NUMBER * 4 + GAP_X * 7, startY + TEXTFIELD_BORDER + LINE_HEIGHT + GAP_Y, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
 
-            idTextField.setMaxStringLength(256);
+            idTextField.setMaxStringLength(128);
             offsetXTextField.setMaxStringLength(8);
             offsetYTextField.setMaxStringLength(8);
             offsetZTextField.setMaxStringLength(8);
@@ -236,28 +264,39 @@ public class SoundBlockEditScreen extends GuiScreen {
             buttonMoveUp = new Button(startX + TEXTFIELD_WIDTH_SOUNDID + BUTTON_WIDTH + GAP_X * 2, startY, ARROW_UP_UV_X, ARROW_UP_UV_Y, ARROW_WIDTH, LINE_HEIGHT);
             buttonMoveDown = new Button(startX + TEXTFIELD_WIDTH_SOUNDID + BUTTON_WIDTH + GAP_X * 2, startY + LINE_HEIGHT + GAP_Y, ARROW_DOWN_UV_X, ARROW_DOWN_UV_Y, ARROW_WIDTH, LINE_HEIGHT);
 
-            // Tickboxes
-            //drawTexturedModalRect(startX + TEXTFIELD_WIDTH_NUMBER * 3 + BUTTON_WIDTH + GAP_X * 4, startY + LINE_HEIGHT + GAP_Y, TICKBOX_EMPTY_UV_X, TICKBOX_EMPTY_UV_Y, BUTTON_WIDTH, LINE_HEIGHT);
-            //drawTexturedModalRect(startX + TEXTFIELD_WIDTH_NUMBER * 3 + BUTTON_WIDTH * 2 + GAP_X * 5, startY + LINE_HEIGHT + GAP_Y, TICKBOX_EMPTY_UV_X, TICKBOX_EMPTY_UV_Y, BUTTON_WIDTH, LINE_HEIGHT);
+            // Checkboxes
+            checkboxOnEnter = new CheckBox(startX + BUTTON_WIDTH + TEXTFIELD_WIDTH_NUMBER * 3 + GAP_X * 4, startY + LINE_HEIGHT + GAP_Y, CHECKBOX_UV_X, CHECKBOX_UV_Y, BUTTON_WIDTH, LINE_HEIGHT);
+            checkboxOnExit = new CheckBox(startX + BUTTON_WIDTH * 2 + TEXTFIELD_WIDTH_NUMBER * 3 + GAP_X * 5, startY + LINE_HEIGHT + GAP_Y, CHECKBOX_UV_X, CHECKBOX_UV_Y, BUTTON_WIDTH, LINE_HEIGHT);
 
             refreshState();
         }
 
         public void refreshState() {
             List<SoundBlockData.Sound> soundList = getActiveSoundList();
-
             int index = entryOffset + localEntryOffset;
             int size = soundList.size();
             boolean isVisible = index < size;
+            soundData = isVisible ? soundList.get(entryOffset + localEntryOffset) : null;
 
-            if (isVisible) {
-                SoundBlockData.Sound sound = soundList.get(entryOffset + localEntryOffset);
-                idTextField.setText(sound.getId());
-                offsetXTextField.setText(((Double) sound.getOffsetX()).toString());
-                offsetYTextField.setText(((Double) sound.getOffsetY()).toString());
-                offsetZTextField.setText(((Double) sound.getOffsetZ()).toString());
-                volumeTextField.setText(((Float) sound.getVolume()).toString());
-                pitchTextField.setText(((Float) sound.getPitch()).toString());
+            if (soundData != null) {
+                // Fix cursor misplacement when switching from a long sound path to a short one
+                idTextField.setCursorPositionZero();
+
+                idTextField.setText(soundData.getId());
+                offsetXTextField.setText(((Double) soundData.getOffsetX()).toString());
+                offsetYTextField.setText(((Double) soundData.getOffsetY()).toString());
+                offsetZTextField.setText(((Double) soundData.getOffsetZ()).toString());
+                volumeTextField.setText(((Float) soundData.getVolume()).toString());
+                pitchTextField.setText(((Float) soundData.getPitch()).toString());
+
+                offsetXTextField.setCursorPositionZero();
+                offsetYTextField.setCursorPositionZero();
+                offsetZTextField.setCursorPositionZero();
+                volumeTextField.setCursorPositionZero();
+                pitchTextField.setCursorPositionZero();
+
+                checkboxStateOnEnter = soundData.isStopOnEnter();
+                checkboxStateOnExit = soundData.isStopOnExit();
             }
 
             idTextField.setVisible(isVisible);
@@ -271,6 +310,9 @@ public class SoundBlockEditScreen extends GuiScreen {
             buttonRemove.setVisible(isVisible);
             buttonMoveUp.setVisible(isVisible && index > 0);
             buttonMoveDown.setVisible(index < size - 1);
+
+            checkboxOnEnter.setVisible(isVisible);
+            checkboxOnExit.setVisible(isVisible);
         }
 
         public void draw(int mouseX, int mouseY, float partialTicks) {
@@ -286,16 +328,18 @@ public class SoundBlockEditScreen extends GuiScreen {
             volumeTextField.drawTextBox();
             pitchTextField.drawTextBox();
 
-            List<SoundBlockData.Sound> soundList = getActiveSoundList();
-            int soundListIndex = entryOffset + localEntryOffset;
-
             buttonAdd.draw(mouseX, mouseY, partialTicks);
             buttonRemove.draw(mouseX, mouseY, partialTicks);
             buttonMoveUp.draw(mouseX, mouseY, partialTicks);
             buttonMoveDown.draw(mouseX, mouseY, partialTicks);
+
+            checkboxOnEnter.draw(mouseX, mouseY, partialTicks, checkboxStateOnEnter);
+            checkboxOnExit.draw(mouseX, mouseY, partialTicks, checkboxStateOnExit);
         }
 
         public void mouseClicked(int mouseX, int mouseY, int mouseButton) {
+            if (soundData == null) return;
+
             if (idTextField.getVisible()) {
                 idTextField.mouseClicked(mouseX, mouseY, mouseButton);
             }
@@ -326,6 +370,7 @@ public class SoundBlockEditScreen extends GuiScreen {
                     soundList.add(new SoundBlockData.Sound());
                 }
                 refreshAllStates();
+                return;
             }
             if (buttonRemove.mouseClicked(mouseX, mouseY, mouseButton)) {
                 List<SoundBlockData.Sound> soundList = getActiveSoundList();
@@ -334,6 +379,7 @@ public class SoundBlockEditScreen extends GuiScreen {
                 if (soundListIndex < soundList.size()) {
                     soundList.remove(soundListIndex);
                     refreshAllStates();
+                    return;
                 }
             }
 
@@ -347,6 +393,7 @@ public class SoundBlockEditScreen extends GuiScreen {
                     SoundBlockData.Sound sound2 = soundList.set(soundListIndex - 1, sound);
                     soundList.set(soundListIndex, sound2);
                     refreshAllStates();
+                    return;
                 }
             }
             if (buttonMoveDown.mouseClicked(mouseX, mouseY, mouseButton)) {
@@ -358,43 +405,62 @@ public class SoundBlockEditScreen extends GuiScreen {
                     SoundBlockData.Sound sound2 = soundList.set(soundListIndex + 1, sound);
                     soundList.set(soundListIndex, sound2);
                     refreshAllStates();
+                    return;
                 }
+            }
+
+            // Checkboxes
+            if (checkboxOnEnter.mouseClicked(mouseX, mouseY, mouseButton)) {
+                checkboxStateOnEnter = !checkboxStateOnEnter;
+                soundData.setStopOnEnter(checkboxStateOnEnter);
+            }
+            if (checkboxOnExit.mouseClicked(mouseX, mouseY, mouseButton)) {
+                checkboxStateOnExit = !checkboxStateOnExit;
+                soundData.setStopOnExit(checkboxStateOnExit);
             }
         }
 
         public void keyTyped(char typedChar, int keyCode) {
+            if (soundData == null) return;
+
             if (idTextField.getVisible()) {
                 idTextField.textboxKeyTyped(typedChar, keyCode);
+                soundData.setId(idTextField.getText());
             }
             if (offsetXTextField.getVisible()) {
                 offsetXTextField.textboxKeyTyped(typedChar, keyCode);
+                soundData.setOffsetX(parseAsDouble(offsetXTextField.getText(), soundData.getOffsetX()));
             }
             if (offsetYTextField.getVisible()) {
                 offsetYTextField.textboxKeyTyped(typedChar, keyCode);
+                soundData.setOffsetY(parseAsDouble(offsetYTextField.getText(), soundData.getOffsetY()));
             }
             if (offsetZTextField.getVisible()) {
                 offsetZTextField.textboxKeyTyped(typedChar, keyCode);
+                soundData.setOffsetZ(parseAsDouble(offsetZTextField.getText(), soundData.getOffsetZ()));
             }
             if (volumeTextField.getVisible()) {
                 volumeTextField.textboxKeyTyped(typedChar, keyCode);
+                soundData.setVolume(parseAsFloat(volumeTextField.getText(), soundData.getVolume()));
             }
             if (pitchTextField.getVisible()) {
                 pitchTextField.textboxKeyTyped(typedChar, keyCode);
+                soundData.setPitch(parseAsFloat(pitchTextField.getText(), soundData.getPitch()));
             }
         }
     }
 
     public class Button {
 
-        private static final int UV_OFFSET_X_HOVERED = 1; // Multiplier for the "hovered" state UV's X position (times width)
-        private static final int UV_OFFSET_Y_HOVERED = 0; // Multiplier for the "hovered" state UV's Y position (times height)
+        protected static final int UV_OFFSET_X_HOVERED = 1; // Multiplier for the "hovered" state UV's X position (times width)
+        protected static final int UV_OFFSET_Y_HOVERED = 0; // Multiplier for the "hovered" state UV's Y position (times height)
 
-        private int buttonX;
-        private int buttonY;
-        private int buttonUV_x;
-        private int buttonUV_y;
-        private int buttonWidth;
-        private int buttonHeight;
+        protected int buttonX;
+        protected int buttonY;
+        protected int buttonUV_x;
+        protected int buttonUV_y;
+        protected int buttonWidth;
+        protected int buttonHeight;
 
         @Getter
         @Setter
@@ -411,13 +477,14 @@ public class SoundBlockEditScreen extends GuiScreen {
 
         public void draw(int mouseX, int mouseY, float partialTicks) {
             if (visible) {
+                GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
                 mc.getTextureManager().bindTexture(TEXTURE);
 
-                if (isPositionAboveButton(mouseX, mouseY)) {
-                    drawTexturedModalRect(buttonX, buttonY, buttonUV_x + UV_OFFSET_X_HOVERED * buttonWidth, buttonUV_y + UV_OFFSET_Y_HOVERED * buttonHeight, buttonWidth, buttonHeight);
-                } else {
-                    drawTexturedModalRect(buttonX, buttonY, buttonUV_x, buttonUV_y, buttonWidth, buttonHeight);
-                }
+                boolean hovering = isPositionAboveButton(mouseX, mouseY);
+                int coefHoveredX = hovering ? UV_OFFSET_X_HOVERED : 0;
+                int coefHoveredY = hovering ? UV_OFFSET_Y_HOVERED : 0;
+
+                drawTexturedModalRect(buttonX, buttonY, buttonUV_x + coefHoveredX * buttonWidth, buttonUV_y + coefHoveredY * buttonHeight, buttonWidth, buttonHeight);
             }
         }
 
@@ -425,8 +492,33 @@ public class SoundBlockEditScreen extends GuiScreen {
             return this.visible && isPositionAboveButton(mouseX, mouseY);
         }
 
-        private boolean isPositionAboveButton(int mouseX, int mouseY) {
+        protected boolean isPositionAboveButton(int mouseX, int mouseY) {
             return mouseX >= this.buttonX && mouseY >= this.buttonY && mouseX < this.buttonX + this.buttonWidth && mouseY < this.buttonY + this.buttonHeight;
+        }
+    }
+
+    public class CheckBox extends Button {
+
+        protected static final int UV_OFFSET_X_CHECKED = 2; // Multiplier for the "checked" state UV's X position (times width)
+        protected static final int UV_OFFSET_Y_CHECKED = 0; // Multiplier for the "checked" state UV's Y position (times height)
+
+        public CheckBox(int originX, int originY, int UV_x, int UV_y, int width, int height) {
+            super(originX, originY, UV_x, UV_y, width, height);
+        }
+
+        public void draw(int mouseX, int mouseY, float partialTicks, boolean checked) {
+            if (isVisible()) {
+                GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+                mc.getTextureManager().bindTexture(TEXTURE);
+
+                boolean hovering = isPositionAboveButton(mouseX, mouseY);
+                int coefHoveredX = hovering ? UV_OFFSET_X_HOVERED : 0;
+                int coefHoveredY = hovering ? UV_OFFSET_Y_HOVERED : 0;
+                int coefCheckedX = checked ? UV_OFFSET_X_CHECKED : 0;
+                int coefCheckedY = checked ? UV_OFFSET_Y_CHECKED : 0;
+
+                drawTexturedModalRect(buttonX, buttonY, buttonUV_x + (coefHoveredX + coefCheckedX) * buttonWidth, buttonUV_y + (coefHoveredY + coefCheckedY) * buttonHeight, buttonWidth, buttonHeight);
+            }
         }
     }
 }
