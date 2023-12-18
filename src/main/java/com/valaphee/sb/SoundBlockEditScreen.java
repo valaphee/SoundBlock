@@ -53,6 +53,7 @@ public class SoundBlockEditScreen extends GuiScreen {
     private static final int SCROLLBAR_POS_Y = SOUNDENTRY_POS_Y;
     private static final int SCROLLBAR_UV_X = 242;
     private static final int SCROLLBAR_UV_Y = 24;
+    private static final int SCROLLBAR_BORDER = 1;
 
     private static final int SCROLLBAR_THUMB_WIDTH = 12;
     private static final int SCROLLBAR_THUMB_HEIGHT = 15;
@@ -100,7 +101,7 @@ public class SoundBlockEditScreen extends GuiScreen {
         sound2Entry = new Entry(1, guiOriginX + SOUNDENTRY_POS_X, guiOriginY + SOUNDENTRY_POS_Y + SOUNDENTRY_HEIGHT - GAP_Y);
         sound3Entry = new Entry(2, guiOriginX + SOUNDENTRY_POS_X, guiOriginY + SOUNDENTRY_POS_Y + (SOUNDENTRY_HEIGHT - GAP_Y) * 2);
 
-        scrollbar = new Scrollbar(guiOriginX + SCROLLBAR_THUMB_POS_X, guiOriginY + SCROLLBAR_THUMB_POS_Y, SCROLLBAR_THUMB_UV_X, SCROLLBAR_THUMB_UV_Y, SCROLLBAR_THUMB_WIDTH, SCROLLBAR_THUMB_HEIGHT, SCROLLBAR_HEIGHT, 1);
+        scrollbar = new Scrollbar(guiOriginX + SCROLLBAR_THUMB_POS_X, guiOriginY + SCROLLBAR_THUMB_POS_Y, SCROLLBAR_THUMB_UV_X, SCROLLBAR_THUMB_UV_Y, SCROLLBAR_THUMB_WIDTH, SCROLLBAR_THUMB_HEIGHT, SCROLLBAR_HEIGHT - 2 * SCROLLBAR_BORDER, 1);
     }
 
     @Override
@@ -170,15 +171,6 @@ public class SoundBlockEditScreen extends GuiScreen {
     }
 
     @Override
-    protected void mouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
-        super.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick);
-
-        if (tab != 0) {
-            scrollbar.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick);
-        }
-    }
-
-    @Override
     protected void mouseReleased(int mouseX, int mouseY, int releasedMouseButton) {
         super.mouseReleased(mouseX, mouseY, releasedMouseButton);
 
@@ -215,7 +207,7 @@ public class SoundBlockEditScreen extends GuiScreen {
 
     private void refreshAllStates() {
         List<SoundBlockData.Sound> soundList = getActiveSoundList();
-        scrollbar.setPositions(soundList.size() - 3);
+        scrollbar.setMaxPosition(soundList.size() - 2);
 
         sound1Entry.refreshState();
         sound2Entry.refreshState();
@@ -408,8 +400,6 @@ public class SoundBlockEditScreen extends GuiScreen {
         }
 
         public void mouseClicked(int mouseX, int mouseY, int mouseButton) {
-            if (soundData == null) return;
-
             if (idTextField.getVisible()) {
                 idTextField.mouseClicked(mouseX, mouseY, mouseButton);
             }
@@ -598,16 +588,15 @@ public class SoundBlockEditScreen extends GuiScreen {
         private int position;
 
         @Getter
-        @Setter
-        private int positions;
+        private int maxPosition;
 
         private boolean inUse;
 
         public Scrollbar(int originX, int originY, int UV_x, int UV_y, int width, int height, int argScrollableHeight, int argPositions) {
             super(originX, originY, UV_x, UV_y, width, height);
 
-            scrollableHeight = argScrollableHeight;
-            positions = argPositions;
+            scrollableHeight = Integer.max(argScrollableHeight - height, 0);
+            maxPosition = Integer.max(argPositions, 1);
 
             position = 1;
             inUse = false;
@@ -622,14 +611,25 @@ public class SoundBlockEditScreen extends GuiScreen {
                 boolean hovering = inUse || isPositionAboveButton(mouseX, mouseY);
                 int coefHoveredX = hovering ? UV_OFFSET_X_HOVERED : 0;
                 int coefHoveredY = hovering ? UV_OFFSET_Y_HOVERED : 0;
+                int posY = buttonY;
 
-                drawTexturedModalRect(buttonX, buttonY, buttonUV_x + coefHoveredX * buttonWidth, buttonUV_y + coefHoveredY * buttonHeight, buttonWidth, buttonHeight);
+                if (maxPosition > 0) {
+                    if (inUse) {
+                        float percent = (float)(mouseY - buttonY) / (float)(scrollableHeight + buttonHeight);
+
+                        setPosition(Integer.min((int)(percent * (float)(maxPosition + 1)), maxPosition));
+                    }
+
+                    posY += (int)(((float)position / (float)maxPosition) * (float)scrollableHeight);
+                }
+
+                drawTexturedModalRect(buttonX, posY, buttonUV_x + coefHoveredX * buttonWidth, buttonUV_y + coefHoveredY * buttonHeight, buttonWidth, buttonHeight);
             }
         }
 
         @Override
         public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) {
-            boolean result = isVisible() && mouseButton == 0 && isPositionAboveButton(mouseX, mouseY);
+            boolean result = isVisible() && mouseButton == 0 && isPositionAboveScrollbar(mouseX, mouseY);
 
             if (result) {
                 inUse = true;
@@ -638,16 +638,38 @@ public class SoundBlockEditScreen extends GuiScreen {
             return result;
         }
 
-        public void mouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
-            if (clickedMouseButton == 0) {
-
-            }
-        }
-
         public void mouseReleased(int mouseX, int mouseY, int releasedMouseButton) {
             if (releasedMouseButton == 0) {
                 inUse = false;
             }
+        }
+
+        @Override
+        protected boolean isPositionAboveButton(int mouseX, int mouseY) {
+            int posY = this.buttonY + (int)(((float)position / (float)maxPosition) * (float)scrollableHeight);
+
+            return mouseX >= this.buttonX && mouseY >= posY && mouseX < this.buttonX + this.buttonWidth && mouseY < posY + this.buttonHeight;
+        }
+
+        protected boolean isPositionAboveScrollbar(int mouseX, int mouseY) {
+            return mouseX >= this.buttonX && mouseY >= this.buttonY && mouseX < this.buttonX + this.buttonWidth && mouseY < this.buttonY + this.buttonHeight + this.scrollableHeight;
+        }
+
+        public void setPosition(int value) {
+            if (value == position) {
+                return;
+            }
+            position = Integer.max(Integer.min(value, maxPosition), 0);
+            entryOffset = position;
+            refreshAllStates();
+        }
+
+        public void setMaxPosition(int value) {
+            if (value == maxPosition) {
+                return;
+            }
+            maxPosition = Integer.max(value, 0);
+            setPosition(Integer.min(position, maxPosition));
         }
     }
 }
