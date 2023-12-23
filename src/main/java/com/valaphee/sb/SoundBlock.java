@@ -42,32 +42,12 @@ public class SoundBlock extends Block implements ITileEntityProvider {
 
     @Override
     public boolean eventReceived(IBlockState state, World worldIn, BlockPos pos, int id, int param) {
-        if (!worldIn.isRemote) {
-            return true;
-        }
-
-        if (id == 0) {
-            if (param == 0) {
-                SoundBlockData soundBlockData = (SoundBlockData) worldIn.getTileEntity(pos);
-                soundBlockData.setPowered(true);
-                Main.instance.playIntro(soundBlockData);
-            } else if (param == 1) {
-                SoundBlockData soundBlockData = (SoundBlockData) worldIn.getTileEntity(pos);
-                soundBlockData.setPowered(false);
-                Main.instance.playOutro(soundBlockData);
-            }
-        }
-
-        return true;
+        TileEntity tileEntity = worldIn.getTileEntity(pos);
+        return tileEntity != null && tileEntity.receiveClientEvent(id, param);
     }
 
     @Override
     public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos) {
-        // Server-only
-        /*if (worldIn.isRemote) {
-            return;
-        }*/
-
         TileEntity tileEntity = worldIn.getTileEntity(pos);
         if (!(tileEntity instanceof SoundBlockData)) {
             return;
@@ -93,11 +73,6 @@ public class SoundBlock extends Block implements ITileEntityProvider {
 
     @Override
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
-        // Server-only
-        /*if (worldIn.isRemote) {
-            return;
-        }*/
-
         TileEntity tileEntity = worldIn.getTileEntity(pos);
         if (!(tileEntity instanceof SoundBlockData)) {
             return;
@@ -115,11 +90,6 @@ public class SoundBlock extends Block implements ITileEntityProvider {
 
     @Override
     public ItemStack getItem(World worldIn, BlockPos pos, IBlockState state) {
-        // Server-only
-        /*if (worldIn.isRemote) {
-            return;
-        }*/
-
         // Load data from item stack
         ItemStack itemStack = super.getItem(worldIn, pos, state);
         itemStack.setTagInfo("BlockEntityTag", worldIn.getTileEntity(pos).serializeNBT());

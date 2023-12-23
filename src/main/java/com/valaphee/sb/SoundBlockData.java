@@ -149,6 +149,21 @@ public class SoundBlockData extends TileEntity {
         unloaded = true;
     }
 
+    @Override
+    public boolean receiveClientEvent(int id, int type) {
+        if (id == 0) {
+            if (type == 0) {
+                powered = true;
+                Main.instance.playIntro(this);
+            } else if (type == 1) {
+                powered = false;
+                Main.instance.playOutro(this);
+            }
+        }
+
+        return true;
+    }
+
     public void fromBytes(PacketBuffer packetBuffer) {
         powered = packetBuffer.readBoolean();
         offsetX = packetBuffer.readDouble();
