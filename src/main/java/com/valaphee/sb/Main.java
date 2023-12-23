@@ -18,7 +18,9 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
+import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.common.registry.GameRegistry;
+import net.minecraftforge.fml.relauncher.Side;
 import org.apache.logging.log4j.Logger;
 
 import java.util.*;
@@ -34,6 +36,8 @@ public class Main {
     public static Main instance;
     public static Logger logger;
 
+    public static SimpleNetworkWrapper network;
+
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         logger = event.getModLog();
@@ -42,6 +46,9 @@ public class Main {
     @EventHandler
     public void init(FMLInitializationEvent event) {
         NetworkRegistry.INSTANCE.registerGuiHandler(this, new GuiHandler());
+        network = NetworkRegistry.INSTANCE.newSimpleChannel("VSB");
+        network.registerMessage(SoundBlockMessage.Handler.class, SoundBlockMessage.class, 0, Side.SERVER);
+
         MinecraftForge.EVENT_BUS.register(this);
     }
 

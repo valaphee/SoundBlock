@@ -34,51 +34,31 @@ public class SoundBlock extends Block implements ITileEntityProvider {
         setCreativeTab(CreativeTabs.REDSTONE);
     }
 
-    @Override
-    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos) {
-        SoundBlockData soundBlockData = (SoundBlockData) worldIn.getTileEntity(pos);
-
-        boolean powered = worldIn.isBlockPowered(pos);
-        if (powered) {
-            if (!soundBlockData.isPowered()) {
-                soundBlockData.setPowered(true);
-
-                Block soundBlock = worldIn.getBlockState(pos).getBlock();
-                worldIn.addBlockEvent(pos, soundBlock, 0, 0);
-            }
-        } else if (soundBlockData.isPowered()) {
-            soundBlockData.setPowered(false);
-
-            Block soundBlock = worldIn.getBlockState(pos).getBlock();
-            worldIn.addBlockEvent(pos, soundBlock, 0, 1);
-        }
-    }
-
-    @Override
-    public boolean eventReceived(IBlockState state, World worldIn, BlockPos pos, int id, int param) {
-        if (!worldIn.isRemote) {
-            return true;
-        }
-
-        if (id == 0) {
-            if (param == 0) {
-                SoundBlockData soundBlockData = (SoundBlockData) worldIn.getTileEntity(pos);
-                soundBlockData.setPowered(true);
-                Main.instance.playIntro(soundBlockData);
-            } else if (param == 1) {
-                SoundBlockData soundBlockData = (SoundBlockData) worldIn.getTileEntity(pos);
-                soundBlockData.setPowered(false);
-                Main.instance.playOutro(soundBlockData);
-            }
-        }
-
-        return true;
-    }
-
     @Nullable
     @Override
     public TileEntity createNewTileEntity(World worldIn, int meta) {
         return new SoundBlockData();
+    }
+
+    @Override
+    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos) {
+        TileEntity tileEntity = worldIn.getTileEntity(pos);
+        if (!(tileEntity instanceof SoundBlockData)) {
+            return;
+        }
+
+        // Update powered if changed and mark as dirty
+        SoundBlockData data = (SoundBlockData) tileEntity;
+        boolean powered = worldIn.isBlockPowered(pos);
+        if (powered) {
+            if (!data.isPowered()) {
+                data.setPowered(true);
+                data.markDirty();
+            }
+        } else if (data.isPowered()) {
+            data.setPowered(false);
+            data.markDirty();
+        }
     }
 
     @Override
@@ -87,18 +67,24 @@ public class SoundBlock extends Block implements ITileEntityProvider {
 
     @Override
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
-        // Can't keep its powered state and stops the looping
-        SoundBlockData soundBlockData = (SoundBlockData) worldIn.getTileEntity(pos);
-        soundBlockData.setPowered(false);
+        TileEntity tileEntity = worldIn.getTileEntity(pos);
+        if (!(tileEntity instanceof SoundBlockData)) {
+            return;
+        }
 
+        SoundBlockData data = (SoundBlockData) tileEntity;
+        data.setPowered(false); // Stop playing
+
+        // Save data to item stack
         ItemStack itemStack = new ItemStack(SoundBlock.ITEM);
-        itemStack.setTagInfo("BlockEntityTag", soundBlockData.serializeNBT());
+        itemStack.setTagInfo("BlockEntityTag", data.serializeNBT());
         spawnAsEntity(worldIn, pos, itemStack);
         super.breakBlock(worldIn, pos, state);
     }
 
     @Override
     public ItemStack getItem(World worldIn, BlockPos pos, IBlockState state) {
+        // Load data from item stack
         ItemStack itemStack = super.getItem(worldIn, pos, state);
         itemStack.setTagInfo("BlockEntityTag", worldIn.getTileEntity(pos).serializeNBT());
         return itemStack;

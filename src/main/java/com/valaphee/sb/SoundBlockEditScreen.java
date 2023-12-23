@@ -199,6 +199,8 @@ public class SoundBlockEditScreen extends GuiScreen {
     @Override
     public void onGuiClosed() {
         soundBlockData.markDirty();
+
+        Main.network.sendToServer(new SoundBlockMessage(soundBlockData));
     }
 
     private List<SoundBlockData.Sound> getActiveSoundList() {
@@ -217,7 +219,7 @@ public class SoundBlockEditScreen extends GuiScreen {
     private static float parseAsFloat(String text, float defaultValue) {
         try {
             return Float.parseFloat(text);
-        } catch(NumberFormatException e) {
+        } catch (NumberFormatException e) {
             return defaultValue;
         }
     }
@@ -225,7 +227,7 @@ public class SoundBlockEditScreen extends GuiScreen {
     private static double parseAsDouble(String text, double defaultValue) {
         try {
             return Double.parseDouble(text);
-        } catch(NumberFormatException e) {
+        } catch (NumberFormatException e) {
             return defaultValue;
         }
     }
@@ -305,7 +307,7 @@ public class SoundBlockEditScreen extends GuiScreen {
                     return true;
                 }
                 try {
-                   Double.parseDouble(value);
+                    Double.parseDouble(value);
                     return true;
                 } catch (NumberFormatException ignored) {
                     return false;
@@ -615,12 +617,12 @@ public class SoundBlockEditScreen extends GuiScreen {
 
                 if (maxPosition > 0) {
                     if (inUse) {
-                        float percent = (float)(mouseY - buttonY) / (float)(scrollableHeight + buttonHeight);
+                        float percent = (float) (mouseY - buttonY) / (float) (scrollableHeight + buttonHeight);
 
-                        setPosition(Integer.min((int)(percent * (float)(maxPosition + 1)), maxPosition));
+                        setPosition(Integer.min((int) (percent * (float) (maxPosition + 1)), maxPosition));
                     }
 
-                    posY += (int)(((float)position / (float)maxPosition) * (float)scrollableHeight);
+                    posY += (int) (((float) position / (float) maxPosition) * (float) scrollableHeight);
                 }
 
                 drawTexturedModalRect(buttonX, posY, buttonUV_x + coefHoveredX * buttonWidth, buttonUV_y + coefHoveredY * buttonHeight, buttonWidth, buttonHeight);
@@ -646,7 +648,7 @@ public class SoundBlockEditScreen extends GuiScreen {
 
         @Override
         protected boolean isPositionAboveButton(int mouseX, int mouseY) {
-            int posY = this.buttonY + (int)(((float)position / (float)maxPosition) * (float)scrollableHeight);
+            int posY = this.buttonY + (int) (((float) position / (float) maxPosition) * (float) scrollableHeight);
 
             return mouseX >= this.buttonX && mouseY >= posY && mouseX < this.buttonX + this.buttonWidth && mouseY < posY + this.buttonHeight;
         }

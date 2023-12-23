@@ -6,6 +6,7 @@ import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.NetworkManager;
+import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 
@@ -37,13 +38,13 @@ public class SoundBlockData extends TileEntity {
         super.readFromNBT(compound);
 
         powered = compound.getBoolean("powered");
-        offsetX = compound.getDouble("ofx");
-        offsetY = compound.getDouble("ofy");
-        offsetZ = compound.getDouble("ofz");
-        loopDelay = compound.getInteger("lopDelay");
+        offsetX = compound.getDouble("offsetX");
+        offsetY = compound.getDouble("offsetY");
+        offsetZ = compound.getDouble("offsetZ");
+        loopDelay = compound.getInteger("loopDelay");
 
         intro.clear();
-        NBTTagList introListTag = compound.getTagList("itr", 10);
+        NBTTagList introListTag = compound.getTagList("intro", 10);
         for (NBTBase introTag : introListTag) {
             NBTTagCompound introCompoundTag = (NBTTagCompound) introTag;
             Sound sound = new Sound();
@@ -52,7 +53,7 @@ public class SoundBlockData extends TileEntity {
         }
 
         loop.clear();
-        NBTTagList loopListTag = compound.getTagList("lop", 10);
+        NBTTagList loopListTag = compound.getTagList("loop", 10);
         for (NBTBase loopTag : loopListTag) {
             NBTTagCompound loopCompoundTag = (NBTTagCompound) loopTag;
             Sound sound = new Sound();
@@ -61,7 +62,7 @@ public class SoundBlockData extends TileEntity {
         }
 
         outro.clear();
-        NBTTagList outroListTag = compound.getTagList("otr", 10);
+        NBTTagList outroListTag = compound.getTagList("outro", 10);
         for (NBTBase outroTag : outroListTag) {
             NBTTagCompound outroCompoundTag = (NBTTagCompound) outroTag;
             Sound sound = new Sound();
@@ -75,10 +76,10 @@ public class SoundBlockData extends TileEntity {
         super.writeToNBT(compound);
 
         compound.setBoolean("powered", powered);
-        compound.setDouble("ofx", offsetX);
-        compound.setDouble("ofy", offsetY);
-        compound.setDouble("ofz", offsetZ);
-        compound.setInteger("lopDelay", loopDelay);
+        compound.setDouble("offsetX", offsetX);
+        compound.setDouble("offsetY", offsetY);
+        compound.setDouble("offsetZ", offsetZ);
+        compound.setInteger("loopDelay", loopDelay);
 
         NBTTagList introListTag = new NBTTagList();
         for (Sound sound : intro) {
@@ -86,8 +87,7 @@ public class SoundBlockData extends TileEntity {
             sound.writeToNbt(introCompoundTag);
             introListTag.appendTag(introCompoundTag);
         }
-        compound.setTag("itr", introListTag);
-
+        compound.setTag("intro", introListTag);
 
         NBTTagList loopListTag = new NBTTagList();
         for (Sound sound : loop) {
@@ -95,7 +95,7 @@ public class SoundBlockData extends TileEntity {
             sound.writeToNbt(loopCompoundTag);
             loopListTag.appendTag(loopCompoundTag);
         }
-        compound.setTag("lop", loopListTag);
+        compound.setTag("loop", loopListTag);
 
         NBTTagList outroListTag = new NBTTagList();
         for (Sound sound : outro) {
@@ -103,7 +103,7 @@ public class SoundBlockData extends TileEntity {
             sound.writeToNbt(outroCompoundTag);
             outroListTag.appendTag(outroCompoundTag);
         }
-        compound.setTag("otr", outroListTag);
+        compound.setTag("outro", outroListTag);
 
         return compound;
     }
@@ -121,13 +121,23 @@ public class SoundBlockData extends TileEntity {
 
     @Override
     public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) {
+        boolean wasPowered = powered;
+
         super.onDataPacket(net, pkt);
         readFromNBT(pkt.getNbtCompound());
+
+        if (powered) {
+            if (!wasPowered) {
+                Main.instance.playIntro(this);
+            }
+        } else if (wasPowered) {
+            Main.instance.playOutro(this);
+        }
     }
 
     @Override
     public void onLoad() {
-        if (world.isRemote) {
+        if (!world.isRemote) {
             return;
         }
 
@@ -137,6 +147,55 @@ public class SoundBlockData extends TileEntity {
     @Override
     public void onChunkUnload() {
         unloaded = true;
+    }
+
+    public void fromBytes(PacketBuffer packetBuffer) {
+        powered = packetBuffer.readBoolean();
+        offsetX = packetBuffer.readDouble();
+        offsetY = packetBuffer.readDouble();
+        offsetZ = packetBuffer.readDouble();
+        loopDelay = packetBuffer.readInt();
+        intro.clear();
+        int introCount = packetBuffer.readVarInt();
+        for (int i = 0; i < introCount; i++) {
+            Sound sound = new Sound();
+            sound.fromBytes(packetBuffer);
+            intro.add(sound);
+        }
+        loop.clear();
+        int loopCount = packetBuffer.readVarInt();
+        for (int i = 0; i < loopCount; i++) {
+            Sound sound = new Sound();
+            sound.fromBytes(packetBuffer);
+            loop.add(sound);
+        }
+        outro.clear();
+        int outroCount = packetBuffer.readVarInt();
+        for (int i = 0; i < outroCount; i++) {
+            Sound sound = new Sound();
+            sound.fromBytes(packetBuffer);
+            outro.add(sound);
+        }
+    }
+
+    public void toBytes(PacketBuffer packetBuffer) {
+        packetBuffer.writeBoolean(powered);
+        packetBuffer.writeDouble(offsetX);
+        packetBuffer.writeDouble(offsetY);
+        packetBuffer.writeDouble(offsetZ);
+        packetBuffer.writeInt(loopDelay);
+        packetBuffer.writeVarInt(intro.size());
+        for (Sound sound : intro) {
+            sound.toBytes(packetBuffer);
+        }
+        packetBuffer.writeVarInt(loop.size());
+        for (Sound sound : loop) {
+            sound.toBytes(packetBuffer);
+        }
+        packetBuffer.writeVarInt(outro.size());
+        for (Sound sound : outro) {
+            sound.toBytes(packetBuffer);
+        }
     }
 
     @Getter
@@ -153,24 +212,46 @@ public class SoundBlockData extends TileEntity {
 
         public void readFromNbt(NBTTagCompound compound) {
             id = compound.getString("id");
-            offsetX = compound.getDouble("ofx");
-            offsetY = compound.getDouble("ofy");
-            offsetZ = compound.getDouble("ofz");
-            volume = compound.getFloat("vol");
-            pitch = compound.getFloat("pit");
-            stopOnEnter = !compound.getBoolean("pent"); // Default: don't play on enter ( = stop on enter)
-            stopOnExit = !compound.getBoolean("pext"); // Same for exit
+            offsetX = compound.getDouble("offsetX");
+            offsetY = compound.getDouble("offsetY");
+            offsetZ = compound.getDouble("offsetZ");
+            volume = compound.getFloat("volume");
+            pitch = compound.getFloat("pitch");
+            stopOnEnter = compound.getBoolean("stopOnEnter");
+            stopOnExit = compound.getBoolean("stopOnExit");
         }
 
         public void writeToNbt(NBTTagCompound compound) {
             compound.setString("id", id);
-            compound.setDouble("ofx", offsetX);
-            compound.setDouble("ofx", offsetX);
-            compound.setDouble("ofx", offsetX);
-            compound.setFloat("vol", volume);
-            compound.setFloat("pit", pitch);
-            compound.setBoolean("pent", !stopOnEnter);
-            compound.setBoolean("pext", !stopOnExit);
+            compound.setDouble("offsetZ", offsetX);
+            compound.setDouble("offsetY", offsetX);
+            compound.setDouble("offsetX", offsetX);
+            compound.setFloat("volume", volume);
+            compound.setFloat("pitch", pitch);
+            compound.setBoolean("stopOnEnter", stopOnEnter);
+            compound.setBoolean("stopOnExit", stopOnExit);
+        }
+
+        public void fromBytes(PacketBuffer packetBuffer) {
+            id = packetBuffer.readString(256);
+            offsetX = packetBuffer.readDouble();
+            offsetY = packetBuffer.readDouble();
+            offsetZ = packetBuffer.readDouble();
+            volume = packetBuffer.readFloat();
+            pitch = packetBuffer.readFloat();
+            stopOnEnter = packetBuffer.readBoolean();
+            stopOnExit = packetBuffer.readBoolean();
+        }
+
+        public void toBytes(PacketBuffer packetBuffer) {
+            packetBuffer.writeString(id);
+            packetBuffer.writeDouble(offsetX);
+            packetBuffer.writeDouble(offsetY);
+            packetBuffer.writeDouble(offsetZ);
+            packetBuffer.writeFloat(volume);
+            packetBuffer.writeFloat(pitch);
+            packetBuffer.writeBoolean(stopOnEnter);
+            packetBuffer.writeBoolean(stopOnExit);
         }
     }
 }

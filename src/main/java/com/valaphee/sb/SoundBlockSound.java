@@ -25,11 +25,9 @@ public class SoundBlockSound extends MovingSound {
     @Override
     public void update() {
         if (repeat) {
-            // TODO: Check for dimension change
             donePlaying = !blockData.isPowered() || blockData.isUnloaded();
         }
 
-        // Update the sound using the block data
         this.xPosF = (float) ((double) blockData.getPos().getX() + blockData.getOffsetX() + sound.getOffsetX());
         this.yPosF = (float) ((double) blockData.getPos().getY() + blockData.getOffsetY() + sound.getOffsetY());
         this.zPosF = (float) ((double) blockData.getPos().getZ() + blockData.getOffsetZ() + sound.getOffsetZ());
