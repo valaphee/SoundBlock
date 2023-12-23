@@ -2,6 +2,7 @@ package com.valaphee.sb;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -29,8 +30,10 @@ public class SoundBlockData extends TileEntity {
     private final List<Sound> intro = new ArrayList<>();
     private final List<Sound> loop = new ArrayList<>();
     private final List<Sound> outro = new ArrayList<>();
+    private float distance = 1.0f;
 
-    // Unserialized state
+    // Reference only
+    private boolean loading = false;
     private boolean unloaded = false;
 
     @Override
@@ -42,6 +45,7 @@ public class SoundBlockData extends TileEntity {
         offsetY = compound.getDouble("offsetY");
         offsetZ = compound.getDouble("offsetZ");
         loopDelay = compound.getInteger("loopDelay");
+        distance = compound.getFloat("distance");
 
         intro.clear();
         NBTTagList introListTag = compound.getTagList("intro", 10);
@@ -69,6 +73,11 @@ public class SoundBlockData extends TileEntity {
             sound.readFromNbt(outroCompoundTag);
             outro.add(sound);
         }
+
+        if (loading) {
+            loading = false;
+            Main.instance.continueLoop(this);
+        }
     }
 
     @Override
@@ -80,6 +89,7 @@ public class SoundBlockData extends TileEntity {
         compound.setDouble("offsetY", offsetY);
         compound.setDouble("offsetZ", offsetZ);
         compound.setInteger("loopDelay", loopDelay);
+        compound.setFloat("distance", distance);
 
         NBTTagList introListTag = new NBTTagList();
         for (Sound sound : intro) {
@@ -111,7 +121,7 @@ public class SoundBlockData extends TileEntity {
     @Nullable
     @Override
     public SPacketUpdateTileEntity getUpdatePacket() {
-        return new SPacketUpdateTileEntity(pos, 1293, getUpdateTag());
+        return new SPacketUpdateTileEntity(pos, SoundBlock.BLOCK.getRegistryName().hashCode(), getUpdateTag());
     }
 
     @Override
@@ -141,7 +151,7 @@ public class SoundBlockData extends TileEntity {
             return;
         }
 
-        Main.instance.continueLoop(this);
+        loading = true;
     }
 
     @Override
@@ -155,6 +165,8 @@ public class SoundBlockData extends TileEntity {
         offsetY = packetBuffer.readDouble();
         offsetZ = packetBuffer.readDouble();
         loopDelay = packetBuffer.readInt();
+        distance = packetBuffer.readFloat();
+
         intro.clear();
         int introCount = packetBuffer.readVarInt();
         for (int i = 0; i < introCount; i++) {
@@ -162,6 +174,7 @@ public class SoundBlockData extends TileEntity {
             sound.fromBytes(packetBuffer);
             intro.add(sound);
         }
+
         loop.clear();
         int loopCount = packetBuffer.readVarInt();
         for (int i = 0; i < loopCount; i++) {
@@ -169,6 +182,7 @@ public class SoundBlockData extends TileEntity {
             sound.fromBytes(packetBuffer);
             loop.add(sound);
         }
+
         outro.clear();
         int outroCount = packetBuffer.readVarInt();
         for (int i = 0; i < outroCount; i++) {
@@ -184,14 +198,18 @@ public class SoundBlockData extends TileEntity {
         packetBuffer.writeDouble(offsetY);
         packetBuffer.writeDouble(offsetZ);
         packetBuffer.writeInt(loopDelay);
+        packetBuffer.writeFloat(distance);
+
         packetBuffer.writeVarInt(intro.size());
         for (Sound sound : intro) {
             sound.toBytes(packetBuffer);
         }
+
         packetBuffer.writeVarInt(loop.size());
         for (Sound sound : loop) {
             sound.toBytes(packetBuffer);
         }
+
         packetBuffer.writeVarInt(outro.size());
         for (Sound sound : outro) {
             sound.toBytes(packetBuffer);
@@ -209,6 +227,14 @@ public class SoundBlockData extends TileEntity {
         private float pitch = 1.0f;
         private boolean stopOnEnter = true;
         private boolean stopOnExit = true;
+
+        public void setVolume(float volume) {
+            this.volume = Math.min(Math.max(volume, 0.0f), 1.0f);
+        }
+
+        public void setPitch(float pitch) {
+            this.pitch = Math.min(Math.max(pitch, 0.5f), 1.0f);
+        }
 
         public void readFromNbt(NBTTagCompound compound) {
             id = compound.getString("id");

@@ -280,7 +280,7 @@ public class SoundBlockEditScreen extends GuiScreen {
             pitchTextField.setMaxStringLength(8);
 
             // Custom text field validators
-            Predicate<String> isValidDouble = (value) -> {
+            Predicate<String> isValidNumber = (value) -> {
                 if (value.isEmpty()) {
                     return true;
                 }
@@ -291,34 +291,11 @@ public class SoundBlockEditScreen extends GuiScreen {
                     return false;
                 }
             };
-            Predicate<String> isValidVolume = (value) -> {
-                if (value.isEmpty()) {
-                    return true;
-                }
-                try {
-                    Double.parseDouble(value);
-                    return true;
-                } catch (NumberFormatException ignored) {
-                    return false;
-                }
-            };
-            Predicate<String> isValidPitch = (value) -> {
-                if (value.isEmpty()) {
-                    return true;
-                }
-                try {
-                    Double.parseDouble(value);
-                    return true;
-                } catch (NumberFormatException ignored) {
-                    return false;
-                }
-            };
-
-            offsetXTextField.setValidator(isValidDouble);
-            offsetYTextField.setValidator(isValidDouble);
-            offsetZTextField.setValidator(isValidDouble);
-            volumeTextField.setValidator(isValidVolume);
-            pitchTextField.setValidator(isValidPitch);
+            offsetXTextField.setValidator(isValidNumber);
+            offsetYTextField.setValidator(isValidNumber);
+            offsetZTextField.setValidator(isValidNumber);
+            volumeTextField.setValidator(isValidNumber);
+            pitchTextField.setValidator(isValidNumber);
 
             // Add/Remove
             buttonAdd = new Button(startX, startY, BUTTON_ADD_UV_X, BUTTON_ADD_UV_Y, BUTTON_WIDTH, LINE_HEIGHT);

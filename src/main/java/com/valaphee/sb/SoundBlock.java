@@ -42,6 +42,11 @@ public class SoundBlock extends Block implements ITileEntityProvider {
 
     @Override
     public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos) {
+        // Server-only
+        /*if (worldIn.isRemote) {
+            return;
+        }*/
+
         TileEntity tileEntity = worldIn.getTileEntity(pos);
         if (!(tileEntity instanceof SoundBlockData)) {
             return;
@@ -54,10 +59,12 @@ public class SoundBlock extends Block implements ITileEntityProvider {
             if (!data.isPowered()) {
                 data.setPowered(true);
                 data.markDirty();
+                worldIn.notifyBlockUpdate(data.getPos(), state, state, 3);
             }
         } else if (data.isPowered()) {
             data.setPowered(false);
             data.markDirty();
+            worldIn.notifyBlockUpdate(data.getPos(), state, state, 3);
         }
     }
 
@@ -67,6 +74,11 @@ public class SoundBlock extends Block implements ITileEntityProvider {
 
     @Override
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
+        // Server-only
+        /*if (worldIn.isRemote) {
+            return;
+        }*/
+
         TileEntity tileEntity = worldIn.getTileEntity(pos);
         if (!(tileEntity instanceof SoundBlockData)) {
             return;
@@ -84,6 +96,11 @@ public class SoundBlock extends Block implements ITileEntityProvider {
 
     @Override
     public ItemStack getItem(World worldIn, BlockPos pos, IBlockState state) {
+        // Server-only
+        /*if (worldIn.isRemote) {
+            return;
+        }*/
+
         // Load data from item stack
         ItemStack itemStack = super.getItem(worldIn, pos, state);
         itemStack.setTagInfo("BlockEntityTag", worldIn.getTileEntity(pos).serializeNBT());

@@ -18,7 +18,7 @@ public class SoundBlockSound extends MovingSound {
         this.xPosF = (float) ((double) blockData.getPos().getX() + blockData.getOffsetX() + sound.getOffsetX());
         this.yPosF = (float) ((double) blockData.getPos().getY() + blockData.getOffsetY() + sound.getOffsetY());
         this.zPosF = (float) ((double) blockData.getPos().getZ() + blockData.getOffsetZ() + sound.getOffsetZ());
-        this.volume = sound.getVolume();
+        this.volume = blockData.getDistance();
         this.pitch = sound.getPitch();
     }
 
