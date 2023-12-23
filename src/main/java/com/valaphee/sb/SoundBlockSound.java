@@ -25,7 +25,7 @@ public class SoundBlockSound extends MovingSound {
     @Override
     public void update() {
         if (repeat) {
-            donePlaying = !blockData.isPowered() || blockData.isUnloaded();
+            donePlaying = !blockData.isPowered() || blockData.isUnloaded() || blockData.isInvalid();
         }
 
         this.xPosF = (float) ((double) blockData.getPos().getX() + blockData.getOffsetX() + sound.getOffsetX());

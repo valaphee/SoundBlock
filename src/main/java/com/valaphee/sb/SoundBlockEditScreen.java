@@ -114,9 +114,12 @@ public class SoundBlockEditScreen extends GuiScreen {
 
         // Tabs
         this.drawTexturedModalRect(guiOriginX + ACTIVETAB_POS_X + ACTIVETAB_BUTTON_WIDTH * tab, guiOriginY + ACTIVETAB_POS_Y, ACTIVETAB_UV_X, ACTIVETAB_UV_Y, ACTIVETAB_WIDTH, ACTIVETAB_HEIGHT);
+        drawCenteredString(fontRenderer, "General", guiOriginX + ACTIVETAB_POS_X + ACTIVETAB_BUTTON_WIDTH * 0, guiOriginY + ACTIVETAB_POS_Y, 0xFFFFFF);
+        drawCenteredString(fontRenderer, "Intro", guiOriginX + ACTIVETAB_POS_X + ACTIVETAB_BUTTON_WIDTH * 1, guiOriginY + ACTIVETAB_POS_Y, 0xFFFFFF);
+        drawCenteredString(fontRenderer, "Loop", guiOriginX + ACTIVETAB_POS_X + ACTIVETAB_BUTTON_WIDTH * 2, guiOriginY + ACTIVETAB_POS_Y, 0xFFFFFF);
+        drawCenteredString(fontRenderer, "Outro", guiOriginX + ACTIVETAB_POS_X + ACTIVETAB_BUTTON_WIDTH * 3, guiOriginY + ACTIVETAB_POS_Y, 0xFFFFFF);
 
         if (tab != 0) {
-
             // Sound entries
             sound1Entry.draw(mouseX, mouseY, partialTicks);
             sound2Entry.draw(mouseX, mouseY, partialTicks);

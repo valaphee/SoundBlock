@@ -99,6 +99,6 @@ public class SoundBlock extends Block implements ITileEntityProvider {
     @Override
     public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
         playerIn.openGui(Main.instance, GuiHandler.SOUND_BLOCK_EDIT, worldIn, pos.getX(), pos.getY(), pos.getZ());
-        return false;
+        return true;
     }
 }
