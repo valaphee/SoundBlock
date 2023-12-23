@@ -41,6 +41,27 @@ public class SoundBlock extends Block implements ITileEntityProvider {
     }
 
     @Override
+    public boolean eventReceived(IBlockState state, World worldIn, BlockPos pos, int id, int param) {
+        if (!worldIn.isRemote) {
+            return true;
+        }
+
+        if (id == 0) {
+            if (param == 0) {
+                SoundBlockData soundBlockData = (SoundBlockData) worldIn.getTileEntity(pos);
+                soundBlockData.setPowered(true);
+                Main.instance.playIntro(soundBlockData);
+            } else if (param == 1) {
+                SoundBlockData soundBlockData = (SoundBlockData) worldIn.getTileEntity(pos);
+                soundBlockData.setPowered(false);
+                Main.instance.playOutro(soundBlockData);
+            }
+        }
+
+        return true;
+    }
+
+    @Override
     public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos) {
         // Server-only
         /*if (worldIn.isRemote) {
@@ -58,13 +79,11 @@ public class SoundBlock extends Block implements ITileEntityProvider {
         if (powered) {
             if (!data.isPowered()) {
                 data.setPowered(true);
-                data.markDirty();
-                worldIn.notifyBlockUpdate(data.getPos(), state, state, 3);
+                worldIn.addBlockEvent(pos, worldIn.getBlockState(pos).getBlock(), 0, 0);
             }
         } else if (data.isPowered()) {
             data.setPowered(false);
-            data.markDirty();
-            worldIn.notifyBlockUpdate(data.getPos(), state, state, 3);
+            worldIn.addBlockEvent(pos, worldIn.getBlockState(pos).getBlock(), 0, 1);
         }
     }
 

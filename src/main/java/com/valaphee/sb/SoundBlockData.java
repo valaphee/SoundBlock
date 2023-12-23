@@ -131,18 +131,8 @@ public class SoundBlockData extends TileEntity {
 
     @Override
     public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) {
-        boolean wasPowered = powered;
-
         super.onDataPacket(net, pkt);
         readFromNBT(pkt.getNbtCompound());
-
-        if (powered) {
-            if (!wasPowered) {
-                Main.instance.playIntro(this);
-            }
-        } else if (wasPowered) {
-            Main.instance.playOutro(this);
-        }
     }
 
     @Override

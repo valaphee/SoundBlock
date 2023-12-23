@@ -4,7 +4,7 @@
 
 ## Block
 
-- [ ] Implement saving block data to server
+- [x] Implement saving block data to server
 - [ ] Fix sounds continuing to play when the sound block is broken
 - [ ] Implement checkbox sound stopping behaviour:
     - [ ] Left checkbox (StopOnEntry) stops on transition from previous stage to current stage
