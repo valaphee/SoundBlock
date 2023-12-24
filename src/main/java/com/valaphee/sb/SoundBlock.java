@@ -57,17 +57,23 @@ public class SoundBlock extends Block implements ITileEntityProvider {
             return;
         }
 
-        // Update powered if changed and mark as dirty
+        // Ignore if alwaysPowered
         SoundBlockData data = (SoundBlockData) tileEntity;
+        if (data.isAlwaysPowered()) {
+            return;
+        }
+
+        // Broadcast an event when the powered state has changed
+        boolean wasPowered = data.isPowered();
         boolean powered = worldIn.isBlockPowered(pos);
-        if (powered) {
-            if (!data.isPowered()) {
+        if (powered != wasPowered) {
+            if (powered) {
                 data.setPowered(true);
                 worldIn.addBlockEvent(pos, worldIn.getBlockState(pos).getBlock(), 0, 0);
+            } else {
+                data.setPowered(false);
+                worldIn.addBlockEvent(pos, worldIn.getBlockState(pos).getBlock(), 0, 1);
             }
-        } else if (data.isPowered()) {
-            data.setPowered(false);
-            worldIn.addBlockEvent(pos, worldIn.getBlockState(pos).getBlock(), 0, 1);
         }
     }
 

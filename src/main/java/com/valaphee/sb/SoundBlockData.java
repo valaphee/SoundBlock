@@ -20,6 +20,8 @@ public class SoundBlockData extends TileEntity {
     @Setter
     private boolean powered = false;
     @Setter
+    private boolean alwaysPowered = false;
+    @Setter
     private double offsetX = 0.0;
     @Setter
     private double offsetY = 0.0;
@@ -56,6 +58,7 @@ public class SoundBlockData extends TileEntity {
         super.readFromNBT(compound);
 
         powered = compound.getBoolean("powered");
+        alwaysPowered = compound.getBoolean("alwaysPowered");
         offsetX = compound.getDouble("offsetX");
         offsetY = compound.getDouble("offsetY");
         offsetZ = compound.getDouble("offsetZ");
@@ -102,6 +105,7 @@ public class SoundBlockData extends TileEntity {
         super.writeToNBT(compound);
 
         compound.setBoolean("powered", powered);
+        compound.setBoolean("alwaysPowered", alwaysPowered);
         compound.setDouble("offsetX", offsetX);
         compound.setDouble("offsetY", offsetY);
         compound.setDouble("offsetZ", offsetZ);
@@ -185,6 +189,7 @@ public class SoundBlockData extends TileEntity {
 
     public void fromBytes(PacketBuffer packetBuffer) {
         powered = packetBuffer.readBoolean();
+        alwaysPowered = packetBuffer.readBoolean();
         offsetX = packetBuffer.readDouble();
         offsetY = packetBuffer.readDouble();
         offsetZ = packetBuffer.readDouble();
@@ -220,6 +225,7 @@ public class SoundBlockData extends TileEntity {
 
     public void toBytes(PacketBuffer packetBuffer) {
         packetBuffer.writeBoolean(powered);
+        packetBuffer.writeBoolean(alwaysPowered);
         packetBuffer.writeDouble(offsetX);
         packetBuffer.writeDouble(offsetY);
         packetBuffer.writeDouble(offsetZ);

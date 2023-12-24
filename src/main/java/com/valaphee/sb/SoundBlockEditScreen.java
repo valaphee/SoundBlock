@@ -9,6 +9,8 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 
 import java.io.IOException;
 import java.util.List;
@@ -75,6 +77,8 @@ public class SoundBlockEditScreen extends GuiScreen {
     private static final int ACTIVETAB_UV_X = 120;
     private static final int ACTIVETAB_UV_Y = 236;
 
+    private static final int GENERAL_DESCRIPTION_WIDTH = 80;
+
     private static final ResourceLocation TEXTURE = new ResourceLocation("vsb", "textures/gui/sound_block.png");
 
     private SoundBlockData soundBlockData;
@@ -85,6 +89,12 @@ public class SoundBlockEditScreen extends GuiScreen {
 
     private static int tab = 0;
     private int entryOffset = 0;
+
+    private CheckBox checkboxRedstone;
+    private GuiTextField loopDelayTextField;
+    private GuiTextField pitchTextField;
+    private GuiTextField volumeTextField;
+    private GuiTextField distanceTextField;
 
     private Entry sound1Entry;
     private Entry sound2Entry;
@@ -101,6 +111,28 @@ public class SoundBlockEditScreen extends GuiScreen {
         guiOriginX = (this.width - GUI_WIDTH) / 2;
         guiOriginY = (this.height - GUI_HEIGHT) / 2;
 
+        // General tab
+        int startX = guiOriginX + SOUNDENTRY_POS_X;
+        int startY = guiOriginY + SOUNDENTRY_POS_Y;
+
+        checkboxRedstone = new CheckBox(startX + GENERAL_DESCRIPTION_WIDTH, startY, CHECKBOX_UV_X, CHECKBOX_UV_Y, BUTTON_WIDTH, LINE_HEIGHT);
+
+        loopDelayTextField = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + GENERAL_DESCRIPTION_WIDTH, startY + TEXTFIELD_BORDER + LINE_HEIGHT * 1 + GAP_Y * 1, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
+        pitchTextField     = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + GENERAL_DESCRIPTION_WIDTH, startY + TEXTFIELD_BORDER + LINE_HEIGHT * 2 + GAP_Y * 2, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
+        volumeTextField    = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + GENERAL_DESCRIPTION_WIDTH, startY + TEXTFIELD_BORDER + LINE_HEIGHT * 3 + GAP_Y * 3, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
+        distanceTextField  = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + GENERAL_DESCRIPTION_WIDTH, startY + TEXTFIELD_BORDER + LINE_HEIGHT * 4 + GAP_Y * 4, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
+
+        loopDelayTextField.setMaxStringLength(8);
+        pitchTextField.setMaxStringLength(8);
+        volumeTextField.setMaxStringLength(8);
+        distanceTextField.setMaxStringLength(8);
+
+        loopDelayTextField.setValidator(isValidNumber);
+        pitchTextField.setValidator(isValidNumber);
+        volumeTextField.setValidator(isValidNumber);
+        distanceTextField.setValidator(isValidNumber);
+
+        // Sound tabs
         sound1Entry = new Entry(0, guiOriginX + SOUNDENTRY_POS_X, guiOriginY + SOUNDENTRY_POS_Y);
         sound2Entry = new Entry(1, guiOriginX + SOUNDENTRY_POS_X, guiOriginY + SOUNDENTRY_POS_Y + SOUNDENTRY_HEIGHT - GAP_Y);
         sound3Entry = new Entry(2, guiOriginX + SOUNDENTRY_POS_X, guiOriginY + SOUNDENTRY_POS_Y + (SOUNDENTRY_HEIGHT - GAP_Y) * 2);
@@ -125,7 +157,16 @@ public class SoundBlockEditScreen extends GuiScreen {
         drawCenteredString(fontRenderer, "Loop", guiOriginX + ACTIVETAB_POS_X + ACTIVETAB_TEXT_OFFSET_X + ACTIVETAB_BUTTON_WIDTH * 2, guiOriginY + ACTIVETAB_POS_Y + ACTIVETAB_TEXT_OFFSET_Y, 0xFFFFFF);
         drawCenteredString(fontRenderer, "Outro", guiOriginX + ACTIVETAB_POS_X + ACTIVETAB_TEXT_OFFSET_X + ACTIVETAB_BUTTON_WIDTH * 3, guiOriginY + ACTIVETAB_POS_Y + ACTIVETAB_TEXT_OFFSET_Y, 0xFFFFFF);
 
-        if (tab != 0) {
+        if (tab == 0) {
+            // General tab
+            checkboxRedstone.draw(mouseX, mouseY, partialTicks, soundBlockData.isAlwaysPowered());
+
+            loopDelayTextField.drawTextBox();
+            pitchTextField.drawTextBox();
+            volumeTextField.drawTextBox();
+            distanceTextField.drawTextBox();
+
+        } else {
             // Sound entries
             sound1Entry.draw(mouseX, mouseY, partialTicks);
             sound2Entry.draw(mouseX, mouseY, partialTicks);
@@ -165,8 +206,21 @@ public class SoundBlockEditScreen extends GuiScreen {
 
         if (lastTab != newTab) {
             openTab(newTab);
-        } else {
+            return;
+        }
 
+        if (tab == 0) {
+            // General tab
+            if (checkboxRedstone.mouseClicked(mouseX, mouseY, mouseButton)) {
+                soundBlockData.setAlwaysPowered(!soundBlockData.isAlwaysPowered());
+            }
+
+            loopDelayTextField.mouseClicked(mouseX, mouseY, mouseButton);
+            pitchTextField.mouseClicked(mouseX, mouseY, mouseButton);
+            volumeTextField.mouseClicked(mouseX, mouseY, mouseButton);
+            distanceTextField.mouseClicked(mouseX, mouseY, mouseButton);
+
+        } else {
             // Sound entries
             sound1Entry.mouseClicked(mouseX, mouseY, mouseButton);
             sound2Entry.mouseClicked(mouseX, mouseY, mouseButton);
@@ -199,6 +253,24 @@ public class SoundBlockEditScreen extends GuiScreen {
     }
 
     @Override
+    public void handleMouseInput() throws IOException {
+        super.handleMouseInput();
+
+        if (tab == 0) {
+            return;
+        }
+
+        // Enable mouse wheel scrolling
+        int dwheel = Mouse.getEventDWheel();
+
+        if (dwheel != 0) {
+            int scrollOffset = Integer.signum(dwheel);
+            scrollbar.setPosition(scrollbar.position - scrollOffset);
+        };
+
+    }
+
+    @Override
     public boolean doesGuiPauseGame() {
         return false;
     }
@@ -206,7 +278,6 @@ public class SoundBlockEditScreen extends GuiScreen {
     @Override
     public void onGuiClosed() {
         soundBlockData.markDirty();
-
         Main.network.sendToServer(new SoundBlockMessage(soundBlockData));
     }
 
@@ -225,10 +296,31 @@ public class SoundBlockEditScreen extends GuiScreen {
 
     private void openTab(int newTab) {
         tab = newTab;
+        boolean isGeneralTab = (tab == 0);
 
-        scrollbar.setVisible(tab != 0);
+        scrollbar.setVisible(!isGeneralTab);
 
-        if (tab != 0) {
+        checkboxRedstone.setVisible(isGeneralTab);
+
+        loopDelayTextField.setVisible(isGeneralTab);
+        pitchTextField.setVisible(isGeneralTab);
+        volumeTextField.setVisible(isGeneralTab);
+        distanceTextField.setVisible(isGeneralTab);
+
+        if (isGeneralTab) {
+            // General tab
+            loopDelayTextField.setText(((Integer) soundBlockData.getLoopDelay()).toString());
+            pitchTextField.setText(((Float) soundBlockData.getPitch()).toString());
+            volumeTextField.setText(((Float) soundBlockData.getVolume()).toString());
+            distanceTextField.setText(((Float) soundBlockData.getDistance()).toString());
+
+            loopDelayTextField.setCursorPositionZero();
+            pitchTextField.setCursorPositionZero();
+            volumeTextField.setCursorPositionZero();
+            distanceTextField.setCursorPositionZero();
+
+        } else {
+            // Sound tabs
             refreshAllStates();
         }
     }
@@ -248,6 +340,16 @@ public class SoundBlockEditScreen extends GuiScreen {
             return defaultValue;
         }
     }
+
+    // Custom text field validators
+    protected static final Predicate<String> isValidNumber = (value) -> {
+        try { // Evil number parsing hack, go bother Valaphee for details
+            Double.parseDouble(value + (value.contains(".") ? "0" : ".0"));
+            return true;
+        } catch (NumberFormatException ignored) {
+            return false;
+        }
+    };
 
     class Entry {
         private int localEntryOffset;
@@ -299,18 +401,6 @@ public class SoundBlockEditScreen extends GuiScreen {
             volumeTextField.setMaxStringLength(8);
             volumeTextField.setMaxStringLength(8);
 
-            // Custom text field validators
-            Predicate<String> isValidNumber = (value) -> {
-                if (value.isEmpty()) {
-                    return true;
-                }
-                try {
-                    Double.parseDouble(value);
-                    return true;
-                } catch (NumberFormatException ignored) {
-                    return false;
-                }
-            };
             offsetXTextField.setValidator(isValidNumber);
             offsetYTextField.setValidator(isValidNumber);
             offsetZTextField.setValidator(isValidNumber);
@@ -490,33 +580,38 @@ public class SoundBlockEditScreen extends GuiScreen {
         public void keyTyped(char typedChar, int keyCode) {
             if (soundData == null) return;
 
-            if (idTextField.getVisible()) {
-                idTextField.textboxKeyTyped(typedChar, keyCode);
+            // Handle switching input focus between all text fields (tabbing)
+            if (keyCode == Keyboard.KEY_TAB) {
+                return;
+            }
+
+            if (idTextField.textboxKeyTyped(typedChar, keyCode)) {
                 soundData.setId(idTextField.getText());
+                return;
             }
-            if (offsetXTextField.getVisible()) {
-                offsetXTextField.textboxKeyTyped(typedChar, keyCode);
+            if (offsetXTextField.textboxKeyTyped(typedChar, keyCode)) {
                 soundData.setOffsetX(parseAsDouble(offsetXTextField.getText(), soundData.getOffsetX()));
+                return;
             }
-            if (offsetYTextField.getVisible()) {
-                offsetYTextField.textboxKeyTyped(typedChar, keyCode);
+            if (offsetYTextField.textboxKeyTyped(typedChar, keyCode)) {
                 soundData.setOffsetY(parseAsDouble(offsetYTextField.getText(), soundData.getOffsetY()));
+                return;
             }
-            if (offsetZTextField.getVisible()) {
-                offsetZTextField.textboxKeyTyped(typedChar, keyCode);
+            if (offsetZTextField.textboxKeyTyped(typedChar, keyCode)) {
                 soundData.setOffsetZ(parseAsDouble(offsetZTextField.getText(), soundData.getOffsetZ()));
+                return;
             }
-            if (pitchTextField.getVisible()) {
-                pitchTextField.textboxKeyTyped(typedChar, keyCode);
+            if (pitchTextField.textboxKeyTyped(typedChar, keyCode)) {
                 soundData.setPitch(parseAsFloat(pitchTextField.getText(), soundData.getPitch()));
+                return;
             }
-            if (volumeTextField.getVisible()) {
-                volumeTextField.textboxKeyTyped(typedChar, keyCode);
+            if (volumeTextField.textboxKeyTyped(typedChar, keyCode)) {
                 soundData.setVolume(parseAsFloat(volumeTextField.getText(), soundData.getVolume()));
+                return;
             }
-            if (distanceTextField.getVisible()) {
-                distanceTextField.textboxKeyTyped(typedChar, keyCode);
+            if (distanceTextField.textboxKeyTyped(typedChar, keyCode)) {
                 soundData.setDistance(parseAsFloat(distanceTextField.getText(), soundData.getDistance()));
+                return;
             }
         }
     }
