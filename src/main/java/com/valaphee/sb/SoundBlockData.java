@@ -175,12 +175,15 @@ public class SoundBlockData extends TileEntity {
     @Override
     public boolean receiveClientEvent(int id, int type) {
         if (id == 0) {
-            if (type == 0) {
-                powered = true;
-                Main.instance.playIntro(this);
-            } else if (type == 1) {
-                powered = false;
-                Main.instance.playOutro(this);
+            switch (type) {
+                case 0: // Play intro and schedule loop
+                    powered = true;
+                    Main.instance.playIntro(this);
+                    break;
+                case 1: // Play outro and stop loop
+                    powered = false;
+                    Main.instance.playOutro(this);
+                    break;
             }
         }
 

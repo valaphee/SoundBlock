@@ -11,6 +11,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
+import scala.Int;
 
 import java.io.IOException;
 import java.util.List;
@@ -90,7 +91,7 @@ public class SoundBlockEditScreen extends GuiScreen {
     private static int tab = 0;
     private int entryOffset = 0;
 
-    private CheckBox checkboxRedstone;
+    private CheckBox alwaysOnCheckbox;
     private GuiTextField loopDelayTextField;
     private GuiTextField pitchTextField;
     private GuiTextField volumeTextField;
@@ -115,12 +116,12 @@ public class SoundBlockEditScreen extends GuiScreen {
         int startX = guiOriginX + SOUNDENTRY_POS_X;
         int startY = guiOriginY + SOUNDENTRY_POS_Y;
 
-        checkboxRedstone = new CheckBox(startX + GENERAL_DESCRIPTION_WIDTH, startY, CHECKBOX_UV_X, CHECKBOX_UV_Y, BUTTON_WIDTH, LINE_HEIGHT);
+        alwaysOnCheckbox = new CheckBox(startX + GENERAL_DESCRIPTION_WIDTH, startY, CHECKBOX_UV_X, CHECKBOX_UV_Y, BUTTON_WIDTH, LINE_HEIGHT);
 
-        loopDelayTextField = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + GENERAL_DESCRIPTION_WIDTH, startY + TEXTFIELD_BORDER + LINE_HEIGHT * 1 + GAP_Y * 1, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
-        pitchTextField     = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + GENERAL_DESCRIPTION_WIDTH, startY + TEXTFIELD_BORDER + LINE_HEIGHT * 2 + GAP_Y * 2, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
-        volumeTextField    = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + GENERAL_DESCRIPTION_WIDTH, startY + TEXTFIELD_BORDER + LINE_HEIGHT * 3 + GAP_Y * 3, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
-        distanceTextField  = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + GENERAL_DESCRIPTION_WIDTH, startY + TEXTFIELD_BORDER + LINE_HEIGHT * 4 + GAP_Y * 4, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
+        loopDelayTextField = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + GENERAL_DESCRIPTION_WIDTH + TEXTFIELD_BORDER, startY + TEXTFIELD_BORDER + LINE_HEIGHT * 1 + GAP_Y * 1, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
+        pitchTextField     = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + GENERAL_DESCRIPTION_WIDTH + TEXTFIELD_BORDER, startY + TEXTFIELD_BORDER + LINE_HEIGHT * 2 + GAP_Y * 2, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
+        volumeTextField    = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + GENERAL_DESCRIPTION_WIDTH + TEXTFIELD_BORDER, startY + TEXTFIELD_BORDER + LINE_HEIGHT * 3 + GAP_Y * 3, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
+        distanceTextField  = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + GENERAL_DESCRIPTION_WIDTH + TEXTFIELD_BORDER, startY + TEXTFIELD_BORDER + LINE_HEIGHT * 4 + GAP_Y * 4, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
 
         loopDelayTextField.setMaxStringLength(8);
         pitchTextField.setMaxStringLength(8);
@@ -159,7 +160,7 @@ public class SoundBlockEditScreen extends GuiScreen {
 
         if (tab == 0) {
             // General tab
-            checkboxRedstone.draw(mouseX, mouseY, partialTicks, soundBlockData.isAlwaysPowered());
+            alwaysOnCheckbox.draw(mouseX, mouseY, partialTicks, soundBlockData.isAlwaysPowered());
 
             loopDelayTextField.drawTextBox();
             pitchTextField.drawTextBox();
@@ -211,7 +212,7 @@ public class SoundBlockEditScreen extends GuiScreen {
 
         if (tab == 0) {
             // General tab
-            if (checkboxRedstone.mouseClicked(mouseX, mouseY, mouseButton)) {
+            if (alwaysOnCheckbox.mouseClicked(mouseX, mouseY, mouseButton)) {
                 soundBlockData.setAlwaysPowered(!soundBlockData.isAlwaysPowered());
             }
 
@@ -244,8 +245,26 @@ public class SoundBlockEditScreen extends GuiScreen {
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
         super.keyTyped(typedChar, keyCode);
 
-        // Sound entries
-        if (tab != 0) {
+        if (tab == 0) {
+            if (loopDelayTextField.textboxKeyTyped(typedChar, keyCode)) {
+                soundBlockData.setLoopDelay(parseAsInt(loopDelayTextField.getText(), soundBlockData.getLoopDelay()));
+                return;
+            }
+            if (pitchTextField.textboxKeyTyped(typedChar, keyCode)) {
+                soundBlockData.setPitch(parseAsFloat(pitchTextField.getText(), soundBlockData.getPitch()));
+                return;
+            }
+            if (volumeTextField.textboxKeyTyped(typedChar, keyCode)) {
+                soundBlockData.setVolume(parseAsFloat(volumeTextField.getText(), soundBlockData.getVolume()));
+                return;
+            }
+            if (distanceTextField.textboxKeyTyped(typedChar, keyCode)) {
+                soundBlockData.setDistance(parseAsFloat(distanceTextField.getText(), soundBlockData.getDistance()));
+                return;
+            }
+
+        } else {
+            // Sound entries
             sound1Entry.keyTyped(typedChar, keyCode);
             sound2Entry.keyTyped(typedChar, keyCode);
             sound3Entry.keyTyped(typedChar, keyCode);
@@ -300,7 +319,7 @@ public class SoundBlockEditScreen extends GuiScreen {
 
         scrollbar.setVisible(!isGeneralTab);
 
-        checkboxRedstone.setVisible(isGeneralTab);
+        alwaysOnCheckbox.setVisible(isGeneralTab);
 
         loopDelayTextField.setVisible(isGeneralTab);
         pitchTextField.setVisible(isGeneralTab);
@@ -322,6 +341,14 @@ public class SoundBlockEditScreen extends GuiScreen {
         } else {
             // Sound tabs
             refreshAllStates();
+        }
+    }
+
+    private static int parseAsInt(String text, int defaultValue) {
+        try {
+            return Integer.parseInt(text);
+        } catch (NumberFormatException e) {
+            return defaultValue;
         }
     }
 
