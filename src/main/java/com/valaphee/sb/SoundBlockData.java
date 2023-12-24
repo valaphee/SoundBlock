@@ -30,11 +30,26 @@ public class SoundBlockData extends TileEntity {
     private final List<Sound> intro = new ArrayList<>();
     private final List<Sound> loop = new ArrayList<>();
     private final List<Sound> outro = new ArrayList<>();
+
+    private float pitch = 1.0f;
+    private float volume = 1.0f;
     private float distance = 1.0f;
 
     // Reference only
     private boolean loading = false;
     private boolean unloaded = false;
+
+    public void setPitch(float pitch) {
+        this.pitch = Math.max(pitch, 0.0f);
+    }
+
+    public void setVolume(float volume) {
+        this.volume = Math.max(volume, 0.0f);
+    }
+
+    public void setDistance(float distance) {
+        this.distance = Math.max(distance, 0.0f);
+    }
 
     @Override
     public void readFromNBT(NBTTagCompound compound) {
@@ -45,6 +60,8 @@ public class SoundBlockData extends TileEntity {
         offsetY = compound.getDouble("offsetY");
         offsetZ = compound.getDouble("offsetZ");
         loopDelay = compound.getInteger("loopDelay");
+        pitch = compound.getFloat("pitch");
+        volume = compound.getFloat("volume");
         distance = compound.getFloat("distance");
 
         intro.clear();
@@ -89,6 +106,8 @@ public class SoundBlockData extends TileEntity {
         compound.setDouble("offsetY", offsetY);
         compound.setDouble("offsetZ", offsetZ);
         compound.setInteger("loopDelay", loopDelay);
+        compound.setFloat("pitch", pitch);
+        compound.setFloat("volume", volume);
         compound.setFloat("distance", distance);
 
         NBTTagList introListTag = new NBTTagList();
@@ -170,6 +189,8 @@ public class SoundBlockData extends TileEntity {
         offsetY = packetBuffer.readDouble();
         offsetZ = packetBuffer.readDouble();
         loopDelay = packetBuffer.readInt();
+        pitch = packetBuffer.readFloat();
+        volume = packetBuffer.readFloat();
         distance = packetBuffer.readFloat();
 
         intro.clear();
@@ -203,6 +224,8 @@ public class SoundBlockData extends TileEntity {
         packetBuffer.writeDouble(offsetY);
         packetBuffer.writeDouble(offsetZ);
         packetBuffer.writeInt(loopDelay);
+        packetBuffer.writeFloat(pitch);
+        packetBuffer.writeFloat(volume);
         packetBuffer.writeFloat(distance);
 
         packetBuffer.writeVarInt(intro.size());
@@ -228,17 +251,22 @@ public class SoundBlockData extends TileEntity {
         private double offsetX = 0.0;
         private double offsetY = 0.0;
         private double offsetZ = 0.0;
-        private float volume = 1.0f;
         private float pitch = 1.0f;
+        private float volume = 1.0f;
+        private float distance = 1.0f;
         private boolean stopOnEnter = true;
         private boolean stopOnExit = true;
 
-        public void setVolume(float volume) {
-            this.volume = Math.min(Math.max(volume, 0.0f), 1.0f);
+        public void setPitch(float pitch) {
+            this.pitch = Math.max(pitch, 0.0f);
         }
 
-        public void setPitch(float pitch) {
-            this.pitch = Math.min(Math.max(pitch, 0.5f), 1.0f);
+        public void setVolume(float volume) {
+            this.volume = Math.max(volume, 0.0f);
+        }
+
+        public void setDistance(float distance) {
+            this.distance = Math.max(distance, 0.0f);
         }
 
         public void readFromNbt(NBTTagCompound compound) {
@@ -246,8 +274,9 @@ public class SoundBlockData extends TileEntity {
             offsetX = compound.getDouble("offsetX");
             offsetY = compound.getDouble("offsetY");
             offsetZ = compound.getDouble("offsetZ");
-            volume = compound.getFloat("volume");
             pitch = compound.getFloat("pitch");
+            volume = compound.getFloat("volume");
+            distance = compound.getFloat("distance");
             stopOnEnter = compound.getBoolean("stopOnEnter");
             stopOnExit = compound.getBoolean("stopOnExit");
         }
@@ -257,8 +286,9 @@ public class SoundBlockData extends TileEntity {
             compound.setDouble("offsetZ", offsetX);
             compound.setDouble("offsetY", offsetX);
             compound.setDouble("offsetX", offsetX);
-            compound.setFloat("volume", volume);
             compound.setFloat("pitch", pitch);
+            compound.setFloat("volume", volume);
+            compound.setFloat("distance", distance);
             compound.setBoolean("stopOnEnter", stopOnEnter);
             compound.setBoolean("stopOnExit", stopOnExit);
         }
@@ -268,8 +298,9 @@ public class SoundBlockData extends TileEntity {
             offsetX = packetBuffer.readDouble();
             offsetY = packetBuffer.readDouble();
             offsetZ = packetBuffer.readDouble();
-            volume = packetBuffer.readFloat();
             pitch = packetBuffer.readFloat();
+            volume = packetBuffer.readFloat();
+            distance = packetBuffer.readFloat();
             stopOnEnter = packetBuffer.readBoolean();
             stopOnExit = packetBuffer.readBoolean();
         }
@@ -279,8 +310,9 @@ public class SoundBlockData extends TileEntity {
             packetBuffer.writeDouble(offsetX);
             packetBuffer.writeDouble(offsetY);
             packetBuffer.writeDouble(offsetZ);
-            packetBuffer.writeFloat(volume);
             packetBuffer.writeFloat(pitch);
+            packetBuffer.writeFloat(volume);
+            packetBuffer.writeFloat(distance);
             packetBuffer.writeBoolean(stopOnEnter);
             packetBuffer.writeBoolean(stopOnExit);
         }

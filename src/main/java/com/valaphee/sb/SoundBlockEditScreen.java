@@ -15,7 +15,9 @@ import java.util.List;
 
 @SideOnly(Side.CLIENT)
 public class SoundBlockEditScreen extends GuiScreen {
-    private static final int GUI_WIDTH = 234;
+    private static final int GUI_TEXTURE_WIDTH = 512; // Dimensions of the GUI texture file
+    private static final int GUI_TEXTURE_HEIGHT = 256;
+    private static final int GUI_WIDTH = 307; // Dimensions of the GUI container to be drawn
     private static final int GUI_HEIGHT = 153;
 
     private static final int GAP_X = 2;
@@ -23,11 +25,11 @@ public class SoundBlockEditScreen extends GuiScreen {
     private static final int LINE_HEIGHT = 16;
     private static final int BUTTON_WIDTH = 16;
 
-    private static final int TEXTFIELD_WIDTH_SOUNDID = 164;
-    private static final int TEXTFIELD_WIDTH_NUMBER = 24;
+    private static final int TEXTFIELD_WIDTH_SOUNDID = 238;
+    private static final int TEXTFIELD_WIDTH_NUMBER = 32;
     private static final int TEXTFIELD_BORDER = 1;
 
-    private static final int SOUNDENTRY_WIDTH = 204;
+    private static final int SOUNDENTRY_WIDTH = 277;
     private static final int SOUNDENTRY_HEIGHT = 42;
     private static final int SOUNDENTRY_POS_X = 7;
     private static final int SOUNDENTRY_POS_Y = 24;
@@ -51,8 +53,8 @@ public class SoundBlockEditScreen extends GuiScreen {
     private static final int SCROLLBAR_HEIGHT = 122;
     private static final int SCROLLBAR_POS_X = SOUNDENTRY_POS_X + SOUNDENTRY_WIDTH + GAP_X;
     private static final int SCROLLBAR_POS_Y = SOUNDENTRY_POS_Y;
-    private static final int SCROLLBAR_UV_X = 242;
-    private static final int SCROLLBAR_UV_Y = 24;
+    private static final int SCROLLBAR_UV_X = 498;
+    private static final int SCROLLBAR_UV_Y = 0;
     private static final int SCROLLBAR_BORDER = 1;
 
     private static final int SCROLLBAR_THUMB_WIDTH = 12;
@@ -62,9 +64,11 @@ public class SoundBlockEditScreen extends GuiScreen {
     private static final int SCROLLBAR_THUMB_UV_X = 0;
     private static final int SCROLLBAR_THUMB_UV_Y = 241;
 
-    private static final int ACTIVETAB_WIDTH = 51;
+    private static final int ACTIVETAB_WIDTH = 64;
     private static final int ACTIVETAB_BUTTON_WIDTH = ACTIVETAB_WIDTH - 2;
+    private static final int ACTIVETAB_TEXT_OFFSET_X = ACTIVETAB_BUTTON_WIDTH / 2 + 1;
     private static final int ACTIVETAB_HEIGHT = 20;
+    private static final int ACTIVETAB_TEXT_OFFSET_Y = 6;
     private static final int ACTIVETAB_POS_X = 2;
     private static final int ACTIVETAB_BUTTON_POS_X = ACTIVETAB_POS_X + 1;
     private static final int ACTIVETAB_POS_Y = 0;
@@ -79,7 +83,7 @@ public class SoundBlockEditScreen extends GuiScreen {
     private int guiOriginX = 0;
     private int guiOriginY = 0;
 
-    private int tab = 0;
+    private static int tab = 0;
     private int entryOffset = 0;
 
     private Entry sound1Entry;
@@ -102,6 +106,8 @@ public class SoundBlockEditScreen extends GuiScreen {
         sound3Entry = new Entry(2, guiOriginX + SOUNDENTRY_POS_X, guiOriginY + SOUNDENTRY_POS_Y + (SOUNDENTRY_HEIGHT - GAP_Y) * 2);
 
         scrollbar = new Scrollbar(guiOriginX + SCROLLBAR_THUMB_POS_X, guiOriginY + SCROLLBAR_THUMB_POS_Y, SCROLLBAR_THUMB_UV_X, SCROLLBAR_THUMB_UV_Y, SCROLLBAR_THUMB_WIDTH, SCROLLBAR_THUMB_HEIGHT, SCROLLBAR_HEIGHT - 2 * SCROLLBAR_BORDER, 1);
+
+        openTab(tab);
     }
 
     @Override
@@ -110,14 +116,14 @@ public class SoundBlockEditScreen extends GuiScreen {
 
         // Background
         this.mc.getTextureManager().bindTexture(TEXTURE);
-        this.drawTexturedModalRect(guiOriginX, guiOriginY, 0, 0, GUI_WIDTH, GUI_HEIGHT);
+        drawModalRectWithCustomSizedTexture(guiOriginX, guiOriginY, 0, 0, GUI_WIDTH, GUI_HEIGHT, GUI_TEXTURE_WIDTH, GUI_TEXTURE_HEIGHT);
 
         // Tabs
-        this.drawTexturedModalRect(guiOriginX + ACTIVETAB_POS_X + ACTIVETAB_BUTTON_WIDTH * tab, guiOriginY + ACTIVETAB_POS_Y, ACTIVETAB_UV_X, ACTIVETAB_UV_Y, ACTIVETAB_WIDTH, ACTIVETAB_HEIGHT);
-        drawCenteredString(fontRenderer, "General", guiOriginX + ACTIVETAB_POS_X + ACTIVETAB_BUTTON_WIDTH * 0, guiOriginY + ACTIVETAB_POS_Y, 0xFFFFFF);
-        drawCenteredString(fontRenderer, "Intro", guiOriginX + ACTIVETAB_POS_X + ACTIVETAB_BUTTON_WIDTH * 1, guiOriginY + ACTIVETAB_POS_Y, 0xFFFFFF);
-        drawCenteredString(fontRenderer, "Loop", guiOriginX + ACTIVETAB_POS_X + ACTIVETAB_BUTTON_WIDTH * 2, guiOriginY + ACTIVETAB_POS_Y, 0xFFFFFF);
-        drawCenteredString(fontRenderer, "Outro", guiOriginX + ACTIVETAB_POS_X + ACTIVETAB_BUTTON_WIDTH * 3, guiOriginY + ACTIVETAB_POS_Y, 0xFFFFFF);
+        drawModalRectWithCustomSizedTexture(guiOriginX + ACTIVETAB_POS_X + ACTIVETAB_BUTTON_WIDTH * tab, guiOriginY + ACTIVETAB_POS_Y, ACTIVETAB_UV_X, ACTIVETAB_UV_Y, ACTIVETAB_WIDTH, ACTIVETAB_HEIGHT, GUI_TEXTURE_WIDTH, GUI_TEXTURE_HEIGHT);
+        drawCenteredString(fontRenderer, "General", guiOriginX + ACTIVETAB_POS_X + ACTIVETAB_TEXT_OFFSET_X + ACTIVETAB_BUTTON_WIDTH * 0, guiOriginY + ACTIVETAB_POS_Y + ACTIVETAB_TEXT_OFFSET_Y, 0xFFFFFF);
+        drawCenteredString(fontRenderer, "Intro", guiOriginX + ACTIVETAB_POS_X + ACTIVETAB_TEXT_OFFSET_X + ACTIVETAB_BUTTON_WIDTH * 1, guiOriginY + ACTIVETAB_POS_Y + ACTIVETAB_TEXT_OFFSET_Y, 0xFFFFFF);
+        drawCenteredString(fontRenderer, "Loop", guiOriginX + ACTIVETAB_POS_X + ACTIVETAB_TEXT_OFFSET_X + ACTIVETAB_BUTTON_WIDTH * 2, guiOriginY + ACTIVETAB_POS_Y + ACTIVETAB_TEXT_OFFSET_Y, 0xFFFFFF);
+        drawCenteredString(fontRenderer, "Outro", guiOriginX + ACTIVETAB_POS_X + ACTIVETAB_TEXT_OFFSET_X + ACTIVETAB_BUTTON_WIDTH * 3, guiOriginY + ACTIVETAB_POS_Y + ACTIVETAB_TEXT_OFFSET_Y, 0xFFFFFF);
 
         if (tab != 0) {
             // Sound entries
@@ -126,7 +132,7 @@ public class SoundBlockEditScreen extends GuiScreen {
             sound3Entry.draw(mouseX, mouseY, partialTicks);
 
             // Scrollbar
-            this.drawTexturedModalRect(guiOriginX + SCROLLBAR_POS_X, guiOriginY + SCROLLBAR_POS_Y, SCROLLBAR_UV_X, SCROLLBAR_UV_Y, SCROLLBAR_WIDTH, SCROLLBAR_HEIGHT);
+            drawModalRectWithCustomSizedTexture(guiOriginX + SCROLLBAR_POS_X, guiOriginY + SCROLLBAR_POS_Y, SCROLLBAR_UV_X, SCROLLBAR_UV_Y, SCROLLBAR_WIDTH, SCROLLBAR_HEIGHT, GUI_TEXTURE_WIDTH, GUI_TEXTURE_HEIGHT);
             scrollbar.draw(mouseX, mouseY, partialTicks);
         }
     }
@@ -136,32 +142,30 @@ public class SoundBlockEditScreen extends GuiScreen {
         super.mouseClicked(mouseX, mouseY, mouseButton);
 
         int lastTab = tab;
+        int newTab = tab;
 
         // Tabs
         int tabX = guiOriginX + ACTIVETAB_BUTTON_POS_X;
         int tabY = guiOriginY + ACTIVETAB_POS_Y;
         if (mouseX >= tabX && mouseY >= tabY && mouseX < tabX + ACTIVETAB_BUTTON_WIDTH && mouseY < tabY + ACTIVETAB_HEIGHT) {
-            tab = 0;
+            newTab = 0;
         }
         tabX += ACTIVETAB_BUTTON_WIDTH;
         if (mouseX >= tabX && mouseY >= tabY && mouseX < tabX + ACTIVETAB_BUTTON_WIDTH && mouseY < tabY + ACTIVETAB_HEIGHT) {
-            tab = 1;
+            newTab = 1;
         }
         tabX += ACTIVETAB_BUTTON_WIDTH;
         if (mouseX >= tabX && mouseY >= tabY && mouseX < tabX + ACTIVETAB_BUTTON_WIDTH && mouseY < tabY + ACTIVETAB_HEIGHT) {
-            tab = 2;
+            newTab = 2;
         }
         tabX += ACTIVETAB_BUTTON_WIDTH;
         if (mouseX >= tabX && mouseY >= tabY && mouseX < tabX + ACTIVETAB_BUTTON_WIDTH && mouseY < tabY + ACTIVETAB_HEIGHT) {
-            tab = 3;
+            newTab = 3;
         }
 
-        scrollbar.setVisible(tab != 0);
-
-        if (tab != 0) {
-            if (tab != lastTab) {
-                refreshAllStates();
-            }
+        if (lastTab != newTab) {
+            openTab(newTab);
+        } else {
 
             // Sound entries
             sound1Entry.mouseClicked(mouseX, mouseY, mouseButton);
@@ -212,11 +216,21 @@ public class SoundBlockEditScreen extends GuiScreen {
 
     private void refreshAllStates() {
         List<SoundBlockData.Sound> soundList = getActiveSoundList();
-        scrollbar.setMaxPosition(soundList.size() - 2);
+        scrollbar.setMaxPosition(soundList.size() - 1);
 
         sound1Entry.refreshState();
         sound2Entry.refreshState();
         sound3Entry.refreshState();
+    }
+
+    private void openTab(int newTab) {
+        tab = newTab;
+
+        scrollbar.setVisible(tab != 0);
+
+        if (tab != 0) {
+            refreshAllStates();
+        }
     }
 
     private static float parseAsFloat(String text, float defaultValue) {
@@ -246,8 +260,9 @@ public class SoundBlockEditScreen extends GuiScreen {
         private GuiTextField offsetXTextField;
         private GuiTextField offsetYTextField;
         private GuiTextField offsetZTextField;
-        private GuiTextField volumeTextField;
         private GuiTextField pitchTextField;
+        private GuiTextField volumeTextField;
+        private GuiTextField distanceTextField;
 
         private Button buttonAdd;
         private Button buttonRemove;
@@ -272,15 +287,17 @@ public class SoundBlockEditScreen extends GuiScreen {
             offsetXTextField = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + TEXTFIELD_BORDER + BUTTON_WIDTH + GAP_X, startY + TEXTFIELD_BORDER + LINE_HEIGHT + GAP_Y, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
             offsetYTextField = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + TEXTFIELD_BORDER + BUTTON_WIDTH + TEXTFIELD_WIDTH_NUMBER + GAP_X * 2, startY + TEXTFIELD_BORDER + LINE_HEIGHT + GAP_Y, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
             offsetZTextField = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + TEXTFIELD_BORDER + BUTTON_WIDTH + TEXTFIELD_WIDTH_NUMBER * 2 + GAP_X * 3, startY + TEXTFIELD_BORDER + LINE_HEIGHT + GAP_Y, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
-            volumeTextField = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + TEXTFIELD_BORDER + BUTTON_WIDTH * 3 + TEXTFIELD_WIDTH_NUMBER * 3 + GAP_X * 6, startY + TEXTFIELD_BORDER + LINE_HEIGHT + GAP_Y, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
-            pitchTextField = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + TEXTFIELD_BORDER + BUTTON_WIDTH * 3 + TEXTFIELD_WIDTH_NUMBER * 4 + GAP_X * 7, startY + TEXTFIELD_BORDER + LINE_HEIGHT + GAP_Y, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
+            pitchTextField    = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + TEXTFIELD_BORDER + BUTTON_WIDTH * 3 + TEXTFIELD_WIDTH_NUMBER * 3 + GAP_X * 6, startY + TEXTFIELD_BORDER + LINE_HEIGHT + GAP_Y, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
+            volumeTextField   = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + TEXTFIELD_BORDER + BUTTON_WIDTH * 3 + TEXTFIELD_WIDTH_NUMBER * 4 + GAP_X * 7, startY + TEXTFIELD_BORDER + LINE_HEIGHT + GAP_Y, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
+            distanceTextField = new GuiTextField(lastComponentId++, mc.fontRenderer, startX + TEXTFIELD_BORDER + BUTTON_WIDTH * 3 + TEXTFIELD_WIDTH_NUMBER * 5 + GAP_X * 8, startY + TEXTFIELD_BORDER + LINE_HEIGHT + GAP_Y, TEXTFIELD_WIDTH_NUMBER - 2 * TEXTFIELD_BORDER, LINE_HEIGHT - 2 * TEXTFIELD_BORDER);
 
             idTextField.setMaxStringLength(128);
             offsetXTextField.setMaxStringLength(8);
             offsetYTextField.setMaxStringLength(8);
             offsetZTextField.setMaxStringLength(8);
-            volumeTextField.setMaxStringLength(8);
             pitchTextField.setMaxStringLength(8);
+            volumeTextField.setMaxStringLength(8);
+            volumeTextField.setMaxStringLength(8);
 
             // Custom text field validators
             Predicate<String> isValidNumber = (value) -> {
@@ -297,8 +314,9 @@ public class SoundBlockEditScreen extends GuiScreen {
             offsetXTextField.setValidator(isValidNumber);
             offsetYTextField.setValidator(isValidNumber);
             offsetZTextField.setValidator(isValidNumber);
-            volumeTextField.setValidator(isValidNumber);
             pitchTextField.setValidator(isValidNumber);
+            volumeTextField.setValidator(isValidNumber);
+            distanceTextField.setValidator(isValidNumber);
 
             // Add/Remove
             buttonAdd = new Button(startX, startY, BUTTON_ADD_UV_X, BUTTON_ADD_UV_Y, BUTTON_WIDTH, LINE_HEIGHT);
@@ -330,14 +348,16 @@ public class SoundBlockEditScreen extends GuiScreen {
                 offsetXTextField.setText(((Double) soundData.getOffsetX()).toString());
                 offsetYTextField.setText(((Double) soundData.getOffsetY()).toString());
                 offsetZTextField.setText(((Double) soundData.getOffsetZ()).toString());
-                volumeTextField.setText(((Float) soundData.getVolume()).toString());
                 pitchTextField.setText(((Float) soundData.getPitch()).toString());
+                volumeTextField.setText(((Float) soundData.getVolume()).toString());
+                distanceTextField.setText(((Float) soundData.getDistance()).toString());
 
                 offsetXTextField.setCursorPositionZero();
                 offsetYTextField.setCursorPositionZero();
                 offsetZTextField.setCursorPositionZero();
-                volumeTextField.setCursorPositionZero();
                 pitchTextField.setCursorPositionZero();
+                volumeTextField.setCursorPositionZero();
+                distanceTextField.setCursorPositionZero();
 
                 checkboxStateOnEnter = soundData.isStopOnEnter();
                 checkboxStateOnExit = soundData.isStopOnExit();
@@ -347,8 +367,9 @@ public class SoundBlockEditScreen extends GuiScreen {
             offsetXTextField.setVisible(isVisible);
             offsetYTextField.setVisible(isVisible);
             offsetZTextField.setVisible(isVisible);
-            volumeTextField.setVisible(isVisible);
             pitchTextField.setVisible(isVisible);
+            volumeTextField.setVisible(isVisible);
+            distanceTextField.setVisible(isVisible);
 
             buttonAdd.setVisible(index <= size);
             buttonRemove.setVisible(isVisible);
@@ -362,15 +383,16 @@ public class SoundBlockEditScreen extends GuiScreen {
         public void draw(int mouseX, int mouseY, float partialTicks) {
             // Background
             mc.getTextureManager().bindTexture(TEXTURE);
-            drawTexturedModalRect(originX, originY, SOUNDENTRY_UV_X, SOUNDENTRY_UV_Y, SOUNDENTRY_WIDTH, SOUNDENTRY_HEIGHT);
+            drawModalRectWithCustomSizedTexture(originX, originY, SOUNDENTRY_UV_X, SOUNDENTRY_UV_Y, SOUNDENTRY_WIDTH, SOUNDENTRY_HEIGHT, GUI_TEXTURE_WIDTH, GUI_TEXTURE_HEIGHT);
 
             // Text fields
             idTextField.drawTextBox();
             offsetXTextField.drawTextBox();
             offsetYTextField.drawTextBox();
             offsetZTextField.drawTextBox();
-            volumeTextField.drawTextBox();
             pitchTextField.drawTextBox();
+            volumeTextField.drawTextBox();
+            distanceTextField.drawTextBox();
 
             buttonAdd.draw(mouseX, mouseY, partialTicks);
             buttonRemove.draw(mouseX, mouseY, partialTicks);
@@ -394,11 +416,14 @@ public class SoundBlockEditScreen extends GuiScreen {
             if (offsetZTextField.getVisible()) {
                 offsetZTextField.mouseClicked(mouseX, mouseY, mouseButton);
             }
+            if (pitchTextField.getVisible()) {
+                pitchTextField.mouseClicked(mouseX, mouseY, mouseButton);
+            }
             if (volumeTextField.getVisible()) {
                 volumeTextField.mouseClicked(mouseX, mouseY, mouseButton);
             }
-            if (pitchTextField.getVisible()) {
-                pitchTextField.mouseClicked(mouseX, mouseY, mouseButton);
+            if (distanceTextField.getVisible()) {
+                distanceTextField.mouseClicked(mouseX, mouseY, mouseButton);
             }
 
             // Add / Remove
@@ -481,13 +506,17 @@ public class SoundBlockEditScreen extends GuiScreen {
                 offsetZTextField.textboxKeyTyped(typedChar, keyCode);
                 soundData.setOffsetZ(parseAsDouble(offsetZTextField.getText(), soundData.getOffsetZ()));
             }
+            if (pitchTextField.getVisible()) {
+                pitchTextField.textboxKeyTyped(typedChar, keyCode);
+                soundData.setPitch(parseAsFloat(pitchTextField.getText(), soundData.getPitch()));
+            }
             if (volumeTextField.getVisible()) {
                 volumeTextField.textboxKeyTyped(typedChar, keyCode);
                 soundData.setVolume(parseAsFloat(volumeTextField.getText(), soundData.getVolume()));
             }
-            if (pitchTextField.getVisible()) {
-                pitchTextField.textboxKeyTyped(typedChar, keyCode);
-                soundData.setPitch(parseAsFloat(pitchTextField.getText(), soundData.getPitch()));
+            if (distanceTextField.getVisible()) {
+                distanceTextField.textboxKeyTyped(typedChar, keyCode);
+                soundData.setDistance(parseAsFloat(distanceTextField.getText(), soundData.getDistance()));
             }
         }
     }
@@ -526,7 +555,7 @@ public class SoundBlockEditScreen extends GuiScreen {
                 int coefHoveredX = hovering ? UV_OFFSET_X_HOVERED : 0;
                 int coefHoveredY = hovering ? UV_OFFSET_Y_HOVERED : 0;
 
-                drawTexturedModalRect(buttonX, buttonY, buttonUV_x + coefHoveredX * buttonWidth, buttonUV_y + coefHoveredY * buttonHeight, buttonWidth, buttonHeight);
+                drawModalRectWithCustomSizedTexture(buttonX, buttonY, buttonUV_x + coefHoveredX * buttonWidth, buttonUV_y + coefHoveredY * buttonHeight, buttonWidth, buttonHeight, GUI_TEXTURE_WIDTH, GUI_TEXTURE_HEIGHT);
             }
         }
 
@@ -559,7 +588,7 @@ public class SoundBlockEditScreen extends GuiScreen {
                 int coefCheckedX = checked ? UV_OFFSET_X_CHECKED : 0;
                 int coefCheckedY = checked ? UV_OFFSET_Y_CHECKED : 0;
 
-                drawTexturedModalRect(buttonX, buttonY, buttonUV_x + (coefHoveredX + coefCheckedX) * buttonWidth, buttonUV_y + (coefHoveredY + coefCheckedY) * buttonHeight, buttonWidth, buttonHeight);
+                drawModalRectWithCustomSizedTexture(buttonX, buttonY, buttonUV_x + (coefHoveredX + coefCheckedX) * buttonWidth, buttonUV_y + (coefHoveredY + coefCheckedY) * buttonHeight, buttonWidth, buttonHeight, GUI_TEXTURE_WIDTH, GUI_TEXTURE_HEIGHT);
             }
         }
     }
@@ -580,7 +609,7 @@ public class SoundBlockEditScreen extends GuiScreen {
             scrollableHeight = Integer.max(argScrollableHeight - height, 0);
             maxPosition = Integer.max(argPositions, 1);
 
-            position = 1;
+            position = 0;
             inUse = false;
         }
 
@@ -605,7 +634,7 @@ public class SoundBlockEditScreen extends GuiScreen {
                     posY += (int) (((float) position / (float) maxPosition) * (float) scrollableHeight);
                 }
 
-                drawTexturedModalRect(buttonX, posY, buttonUV_x + coefHoveredX * buttonWidth, buttonUV_y + coefHoveredY * buttonHeight, buttonWidth, buttonHeight);
+                drawModalRectWithCustomSizedTexture(buttonX, posY, buttonUV_x + coefHoveredX * buttonWidth, buttonUV_y + coefHoveredY * buttonHeight, buttonWidth, buttonHeight, GUI_TEXTURE_WIDTH, GUI_TEXTURE_HEIGHT);
             }
         }
 

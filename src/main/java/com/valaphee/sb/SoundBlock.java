@@ -42,6 +42,10 @@ public class SoundBlock extends Block implements ITileEntityProvider {
 
     @Override
     public boolean eventReceived(IBlockState state, World worldIn, BlockPos pos, int id, int param) {
+        if (!worldIn.isRemote) {
+            return true;
+        }
+
         TileEntity tileEntity = worldIn.getTileEntity(pos);
         return tileEntity != null && tileEntity.receiveClientEvent(id, param);
     }
