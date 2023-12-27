@@ -23,7 +23,7 @@ The interface is separated into 4 tabs: **General**, **Intro**, **Loop** and **O
 - Sounds listed in the **Loop** tab will play *indefinitely*, as soon as the loop delay (starting with the **Intro** phase) has elapsed, and as long as the Sound Block remains active. Whenever a sound in this list finishes, it is replayed from the beginning - meaning each sound looks individually.
 - Sounds listed in the **Outro** tab are played *once*, as soon as the Sound Block is deactivated.
 
-A sound block is said to be "powered" if:
+A sound block is said to be "activated" if:
 - it is powered by a redstone signal, or
 - the "force-powered" checkbox in the **General** tab is checked.
 

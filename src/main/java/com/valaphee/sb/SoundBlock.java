@@ -1,5 +1,7 @@
 package com.valaphee.sb;
 
+import crazypants.enderio.api.redstone.IRedstoneConnectable;
+import mcjty.xnet.api.channels.IConnectable;
 import net.minecraft.block.Block;
 import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.SoundType;
@@ -15,11 +17,13 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class SoundBlock extends Block implements ITileEntityProvider {
+public class SoundBlock extends Block implements ITileEntityProvider, IRedstoneConnectable, IConnectable {
     public static final Block BLOCK = new SoundBlock();
     public static final Item ITEM = new ItemBlock(BLOCK).setRegistryName(BLOCK.getRegistryName());
 
@@ -110,5 +114,15 @@ public class SoundBlock extends Block implements ITileEntityProvider {
     public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
         playerIn.openGui(Main.instance, GuiHandler.SOUND_BLOCK_EDIT, worldIn, pos.getX(), pos.getY(), pos.getZ());
         return true;
+    }
+
+    @Override
+    public boolean shouldRedstoneConduitConnect(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull EnumFacing from) {
+        return true;
+    }
+
+    @Override
+    public ConnectResult canConnect(@Nonnull IBlockAccess access, @Nonnull BlockPos connectorPos, @Nonnull BlockPos blockPos, @Nullable TileEntity tileEntity, @Nonnull EnumFacing facing) {
+        return ConnectResult.YES;
     }
 }
