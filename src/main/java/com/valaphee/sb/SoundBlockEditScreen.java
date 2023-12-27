@@ -1,6 +1,7 @@
 package com.valaphee.sb;
 
 import com.google.common.base.Predicate;
+import com.google.common.collect.Lists;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.gui.GuiScreen;
@@ -14,6 +15,7 @@ import org.lwjgl.input.Mouse;
 import scala.Int;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 
 @SideOnly(Side.CLIENT)
@@ -102,6 +104,8 @@ public class SoundBlockEditScreen extends GuiScreen {
     private Entry sound3Entry;
     private Scrollbar scrollbar;
 
+    private List<GuiTextField> tabbableFields;
+
     public SoundBlockEditScreen(SoundBlockData soundBlockData) {
         this.soundBlockData = soundBlockData;
     }
@@ -139,6 +143,14 @@ public class SoundBlockEditScreen extends GuiScreen {
         sound3Entry = new Entry(2, guiOriginX + SOUNDENTRY_POS_X, guiOriginY + SOUNDENTRY_POS_Y + (SOUNDENTRY_HEIGHT - GAP_Y) * 2);
 
         scrollbar = new Scrollbar(guiOriginX + SCROLLBAR_THUMB_POS_X, guiOriginY + SCROLLBAR_THUMB_POS_Y, SCROLLBAR_THUMB_UV_X, SCROLLBAR_THUMB_UV_Y, SCROLLBAR_THUMB_WIDTH, SCROLLBAR_THUMB_HEIGHT, SCROLLBAR_HEIGHT - 2 * SCROLLBAR_BORDER, 1);
+
+        // Cache the text fields for later use
+        this.tabbableFields = Lists.newArrayList(
+                this.loopDelayTextField,
+                this.pitchTextField,
+                this.volumeTextField,
+                this.distanceTextField
+        );
 
         openTab(tab);
     }
@@ -246,6 +258,11 @@ public class SoundBlockEditScreen extends GuiScreen {
         super.keyTyped(typedChar, keyCode);
 
         if (tab == 0) {
+            if (keyCode == Keyboard.KEY_TAB) {
+                tabThroughTextFields(this.tabbableFields, GuiScreen.isShiftKeyDown());
+                return;
+            }
+
             if (loopDelayTextField.textboxKeyTyped(typedChar, keyCode)) {
                 soundBlockData.setLoopDelay(parseAsInt(loopDelayTextField.getText(), soundBlockData.getLoopDelay()));
                 return;
@@ -344,6 +361,38 @@ public class SoundBlockEditScreen extends GuiScreen {
         }
     }
 
+    private static void tabThroughTextFields(List<GuiTextField> tabbableFields, boolean shiftPressed) {
+        int size = tabbableFields.size();
+        int textFieldPos = -1;
+
+        // Determine the step direction (1 for forward, -1 for backward)
+        int step = (shiftPressed ? -1 : 1);
+
+        // Determine the currently focused text field, and increment by one
+        for (int i = 0; i < size; i++) {
+            if (tabbableFields.get(i).isFocused()) {
+                textFieldPos = (i + step) % size;
+
+                // Manually handle negative values (modulo isn't enough when decrementing)
+                if (textFieldPos < 0) {
+                    textFieldPos = size - 1;
+                }
+
+                break;
+            }
+        }
+
+        // If no text field is currently focused, then no tabbing needs to be done
+        if (textFieldPos < 0) {
+            return;
+        }
+
+        // Focus the newly selected text field
+        for (int i = 0; i < size; i++) {
+            tabbableFields.get(i).setFocused(i == textFieldPos);
+        }
+    }
+
     private static int parseAsInt(String text, int defaultValue) {
         try {
             return Integer.parseInt(text);
@@ -403,6 +452,8 @@ public class SoundBlockEditScreen extends GuiScreen {
         private boolean checkboxStateOnEnter = false;
         private boolean checkboxStateOnExit = false;
 
+        private final List<GuiTextField> tabbableFields;
+
         public Entry(int localEntryOffset, int originX, int originY) {
             this.localEntryOffset = localEntryOffset;
             this.originX = originX;
@@ -446,6 +497,17 @@ public class SoundBlockEditScreen extends GuiScreen {
             // Checkboxes
             checkboxOnEnter = new CheckBox(startX + BUTTON_WIDTH + TEXTFIELD_WIDTH_NUMBER * 3 + GAP_X * 4, startY + LINE_HEIGHT + GAP_Y, CHECKBOX_UV_X, CHECKBOX_UV_Y, BUTTON_WIDTH, LINE_HEIGHT);
             checkboxOnExit = new CheckBox(startX + BUTTON_WIDTH * 2 + TEXTFIELD_WIDTH_NUMBER * 3 + GAP_X * 5, startY + LINE_HEIGHT + GAP_Y, CHECKBOX_UV_X, CHECKBOX_UV_Y, BUTTON_WIDTH, LINE_HEIGHT);
+
+            // Cache the text fields for later use
+            this.tabbableFields = Lists.newArrayList(
+                    this.idTextField,
+                    this.offsetXTextField,
+                    this.offsetYTextField,
+                    this.offsetZTextField,
+                    this.pitchTextField,
+                    this.volumeTextField,
+                    this.distanceTextField
+            );
 
             refreshState();
         }
@@ -607,8 +669,8 @@ public class SoundBlockEditScreen extends GuiScreen {
         public void keyTyped(char typedChar, int keyCode) {
             if (soundData == null) return;
 
-            // Handle switching input focus between all text fields (tabbing)
             if (keyCode == Keyboard.KEY_TAB) {
+                tabThroughTextFields(this.tabbableFields, GuiScreen.isShiftKeyDown());
                 return;
             }
 
