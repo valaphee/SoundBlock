@@ -292,9 +292,9 @@ public class SoundBlockData extends TileEntity {
 
         public void writeToNbt(NBTTagCompound compound) {
             compound.setString("id", id);
-            compound.setDouble("offsetZ", offsetX);
-            compound.setDouble("offsetY", offsetX);
             compound.setDouble("offsetX", offsetX);
+            compound.setDouble("offsetY", offsetY);
+            compound.setDouble("offsetZ", offsetZ);
             compound.setFloat("pitch", pitch);
             compound.setFloat("volume", volume);
             compound.setFloat("distance", distance);

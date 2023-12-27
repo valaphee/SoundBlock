@@ -4,6 +4,7 @@
 
 ## Block
 
+- [ ] Add a crafting recipe
 - [x] Implement saving block data to server
 - [x] Fix sounds continuing to play when the sound block is broken
 - [ ] Implement checkbox sound stopping behaviour:
